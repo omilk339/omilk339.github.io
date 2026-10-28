@@ -6,6 +6,7 @@ const LANGS = { ko: "한국어", en: "English", ja: "日本語", zh: "中文", r
 
 const I18N = {
   ko: {
+    changeSettings: "↑ 도안 종류·설정 바꾸기",
     docTitle: "사진으로 도안 만들기 · 사도삼촌 작업실",
     brand: "사도삼촌 작업실",
     langLbl: "언어",
@@ -104,6 +105,7 @@ const I18N = {
   },
 
   en: {
+    changeSettings: "↑ Change pattern type & settings",
     docTitle: "Photo to Embroidery Pattern · 사도삼촌 작업실",
     langLbl: "Language",
     nav_about: "About", nav_farm: "Farming", nav_emb: "Embroidery", nav_maker: "Pattern maker", nav_write: "Writing", nav_contact: "Contact",
@@ -201,6 +203,7 @@ const I18N = {
   },
 
   ja: {
+    changeSettings: "↑ 図案の種類・設定を変える",
     docTitle: "写真から刺繍図案 · 사도삼촌 작업실",
     langLbl: "言語",
     nav_about: "紹介", nav_farm: "畑", nav_emb: "刺繍", nav_maker: "図案づくり", nav_write: "文章", nav_contact: "連絡",
@@ -298,6 +301,7 @@ const I18N = {
   },
 
   zh: {
+    changeSettings: "↑ 更改图样类型和设置",
     docTitle: "照片变刺绣图样 · 사도삼촌 작업실",
     langLbl: "语言",
     nav_about: "介绍", nav_farm: "种田", nav_emb: "刺绣", nav_maker: "做图样", nav_write: "文章", nav_contact: "联系",
@@ -395,6 +399,7 @@ const I18N = {
   },
 
   ru: {
+    changeSettings: "↑ Изменить тип схемы и настройки",
     docTitle: "Схема для вышивки из фото · 사도삼촌 작업실",
     langLbl: "Язык",
     nav_about: "О себе", nav_farm: "Огород", nav_emb: "Вышивка", nav_maker: "Схема из фото", nav_write: "Тексты", nav_contact: "Контакты",
@@ -493,6 +498,7 @@ const I18N = {
   },
 
   fr: {
+    changeSettings: "↑ Changer le type de motif et les réglages",
     docTitle: "Photo en motif de broderie · 사도삼촌 작업실",
     langLbl: "Langue",
     nav_about: "À propos", nav_farm: "Potager", nav_emb: "Broderie", nav_maker: "Créer un motif", nav_write: "Écrits", nav_contact: "Contact",
@@ -590,6 +596,7 @@ const I18N = {
   },
 
   vi: {
+    changeSettings: "↑ Đổi kiểu mẫu và cài đặt",
     docTitle: "Biến ảnh thành mẫu thêu · 사도삼촌 작업실",
     langLbl: "Ngôn ngữ",
     nav_about: "Giới thiệu", nav_farm: "Làm vườn", nav_emb: "Thêu", nav_maker: "Tạo mẫu thêu", nav_write: "Bài viết", nav_contact: "Liên hệ",

@@ -93,7 +93,8 @@ function setSource(drawable, w, h) {
   $("sourceImg").src = src.toDataURL("image/jpeg", 0.85);
   $("sourceBox").hidden = false;
   $("settings").hidden = false;
-  render();
+  // 새 사진을 넣으면 완성된 도안으로 바로 내려가요 (휴대폰에서는 아래에 숨어 있어서)
+  render().then(() => $("result").scrollIntoView({ behavior: "smooth", block: "start" }));
 }
 
 function loadFile(file) {

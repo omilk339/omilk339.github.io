@@ -209,6 +209,10 @@ select {
 .save-sheet img { width: 100%; border: 1px solid var(--line); border-radius: 0.5rem; -webkit-touch-callout: default; }
 .save-sheet .row { justify-content: center; }
 
+html { scroll-behavior: smooth; }
+a.up { font-size: 0.875rem; color: var(--indigo); text-decoration: none; justify-self: start; margin-top: -0.5rem; }
+a.up:hover { text-decoration: underline; }
+
 footer { font-size: 0.8125rem; color: var(--muted); }
 footer a { color: var(--muted); }
 

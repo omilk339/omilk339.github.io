@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>사도삼촌 작업실</title>
+<meta name="description" content="평일 나흘은 도시에서, 주말 사흘은 시골에서. 농사를 짓고, 수를 놓고, 글을 쓰는 사도삼촌의 작업실입니다.">
+<link rel="canonical" href="https://omilk339.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="사도삼촌 작업실">
+<meta property="og:title" content="사도삼촌 작업실 · 4일은 도시에서, 3일은 시골에서">
+<meta property="og:description" content="농사를 짓고, 수를 놓고, 글을 씁니다. 사진으로 자수 도안을 만드는 도구도 있어요.">
+<meta property="og:url" content="https://omilk339.github.io/">
+<meta property="og:image" content="https://omilk339.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="4일은 도시에서, 3일은 시골에서 — 수틀 속 튤립 십자수">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -211,6 +223,22 @@
   a.more { font-size: 0.875rem; color: var(--indigo); text-decoration: none; justify-self: start; }
   a.more:hover { text-decoration: underline; }
 
+  /* 인스타그램 고정 작품 */
+  .gallery { display: grid; gap: 0.6rem; margin-block: 0.25rem 0.75rem; }
+  .gallery h3 {
+    margin: 0; font-family: var(--sans); font-weight: 400; font-size: 0.75rem;
+    letter-spacing: 0.12em; color: var(--muted);
+  }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .shots a { display: grid; gap: 0.35rem; color: var(--fg); text-decoration: none; min-width: 0; }
+  .shots img {
+    width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; display: block;
+    border-radius: 0.5rem; background: var(--line); transition: opacity .15s;
+  }
+  .shots a:hover img { opacity: 0.85; }
+  .shots span { font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .shots img { transition: none; } }
+
   /* 언어 */
   nav .lang select {
     font: inherit; font-size: 0.8125rem; color: var(--muted);
@@ -286,6 +314,24 @@
   <section id="embroider">
     <h2><span data-t="h_emb">자수</span> <small>Embroidery</small></h2>
     <p data-t="embP">시골집 마당에 피는 풀꽃을 실로 옮깁니다. 홈질과 사슬수, 프렌치노트처럼 기본 땀을 즐겨 씁니다.</p>
+    <div class="gallery">
+      <h3 data-t="instaTitle">인스타그램 고정 작품</h3>
+      <div class="shots">
+        <a href="https://www.instagram.com/stitch_trip/reel/DAFIhn7ydkZ/" target="_blank" rel="noopener">
+          <img src="/img/insta-1.jpg" width="360" height="640" loading="lazy" alt="" data-t-alt="insta1">
+          <span data-t="insta1"></span>
+        </a>
+        <a href="https://www.instagram.com/stitch_trip/p/DKn3B2qT03E/" target="_blank" rel="noopener">
+          <img src="/img/insta-2.jpg" width="640" height="640" loading="lazy" alt="" data-t-alt="insta2">
+          <span data-t="insta2"></span>
+        </a>
+        <a href="https://www.instagram.com/stitch_trip/reel/DOws9hBk-QL/" target="_blank" rel="noopener">
+          <img src="/img/insta-3.jpg" width="360" height="640" loading="lazy" alt="" data-t-alt="insta3">
+          <span data-t="insta3"></span>
+        </a>
+      </div>
+      <a class="more" href="https://www.instagram.com/stitch_trip/" target="_blank" rel="noopener" data-t="instaMore">@stitch_trip에서 더 보기 →</a>
+    </div>
     <ul class="list">
       <li><span class="item" data-t="work1">마당의 쑥부쟁이</span><span class="meta" data-t="work1m">사슬수 · 새틴수</span></li>
       <li><span class="item" data-t="work2">손수건 모서리 이니셜</span><span class="meta" data-t="work2m">백스티치</span></li>

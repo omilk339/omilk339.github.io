@@ -3,7 +3,9 @@
 // 불러오지 못하면 HTML에 적어 둔 기존 목록이 그대로 보여요.
 
 // 블로그 카테고리 → 첫 화면 묶음
+// main: 처음 보이는 묶음. 사이트 주제(시골·자수)에 맞는 글을 먼저 보여 줘요
 const POST_GROUPS = {
+  main: ["시골집과 텃밭", "4도3촌 생활", "자수작업 일기", "자수 특강 안내"],
   farm: ["시골집과 텃밭"],
   city: ["도시의 일상"],
   trip: ["도시에서 다녀온 짧은 여행", "파크골프장 투어"],
@@ -12,7 +14,7 @@ const POST_GROUPS = {
 const NEW_DAYS = 3;   // 며칠 안에 올린 글을 '새 글'로 표시할지
 
 let posts = null;
-let group = "all";
+let group = "main";
 
 const inGroup = (p, g) => g === "all" || POST_GROUPS[g].includes(p.category);
 const homeT = key => HOME[document.documentElement.lang]?.[key] ?? HOME.ko[key];
@@ -46,7 +48,7 @@ function renderPosts() {
   // 글쓰기: 카테고리 버튼 + 최신 5개
   const chips = document.getElementById("postChips");
   chips.replaceChildren();
-  ["all", ...Object.keys(POST_GROUPS)].filter(g => posts.some(p => inGroup(p, g))).forEach(g => {
+  ["main", "all", "farm", "city", "trip", "emb"].filter(g => posts.some(p => inGroup(p, g))).forEach(g => {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = homeT("cat_" + g);
