@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사진으로 도안 만들기 · 실과 흙</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="inner">
+      <div class="logo"><a href="index.html" style="text-decoration:none">🧵 실과 흙 🌱</a></div>
+      <ul>
+        <li><a href="index.html#about">소개</a></li>
+        <li><a href="index.html#embroidery">자수</a></li>
+        <li><a href="pattern.html" class="here">도안 만들기</a></li>
+        <li><a href="index.html#farm">농사</a></li>
+        <li><a href="index.html#diary">일지</a></li>
+        <li><a href="index.html#guest">방명록</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="maker">
+    <h2>📷 사진으로 도안 만들기</h2>
+    <p class="lead">사진을 찍거나 고르면 자수 도안으로 바꾸고, 그림에 어울리는 기법을 추천해 드려요.</p>
+    <p class="privacy">🔒 사진은 서버로 보내지지 않아요. 지금 쓰는 기기 안에서만 처리되고, 창을 닫으면 사라집니다.</p>
+
+    <!-- 1단계: 사진 -->
+    <div class="step">
+      <h3><span class="num">1</span> 사진 넣기</h3>
+      <div class="pick">
+        <label class="btn main">📷 사진 찍기
+          <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+        </label>
+        <label class="btn">🖼️ 사진 고르기
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </label>
+        <button class="btn" id="sampleBtn" type="button">🌷 예시 그림으로 해보기</button>
+      </div>
+      <p class="tip">💡 배경이 단순하고, 꽃·과일·동물처럼 주인공이 하나인 사진이 예쁘게 나와요.</p>
+      <div class="source" id="sourceBox" hidden>
+        <img id="sourceImg" alt="넣은 사진">
+      </div>
+    </div>
+
+    <!-- 2단계: 도안 종류와 설정 -->
+    <div class="step" id="settings" hidden>
+      <h3><span class="num">2</span> 도안 고르기</h3>
+      <div class="modes" id="modes">
+        <button type="button" data-mode="cross" class="on">
+          <b>✖ 십자수 도안</b><span>모눈칸마다 색 기호가 있는 도안</span>
+        </button>
+        <button type="button" data-mode="french">
+          <b>〰 프랑스 자수 밑그림</b><span>천에 옮겨 그리는 윤곽선 도안</span>
+        </button>
+      </div>
+
+      <div class="controls">
+        <label><span>실 색 개수 <b id="colorsVal">8</b>가지</span>
+          <input type="range" id="colors" min="3" max="16" value="8">
+          <small>적을수록 쉬워요</small>
+        </label>
+        <label class="only-cross"><span>도안 가로 칸 수 <b id="widthVal">50</b>칸</span>
+          <input type="range" id="width" min="20" max="120" step="5" value="50">
+          <small>칸이 적을수록 작고 빨리 끝나요</small>
+        </label>
+        <label class="only-french" hidden><span>단순하게 ↔ 자세하게 <b id="detailVal">2</b></span>
+          <input type="range" id="detail" min="1" max="5" value="2">
+          <small>단순할수록 수놓기 쉬워요</small>
+        </label>
+        <label class="check only-cross"><input type="checkbox" id="skipWhite" checked> 흰색에 가까운 곳은 비워두기 (천 색 그대로)</label>
+        <label class="check only-cross"><input type="checkbox" id="cleanup" checked> 혼자 떨어진 땀 정리하기</label>
+        <label class="check only-french" hidden><input type="checkbox" id="tint" checked> 칸 안에 색 살짝 보여주기</label>
+      </div>
+    </div>
+
+    <!-- 3단계: 결과 -->
+    <div class="step" id="result" hidden>
+      <h3><span class="num">3</span> 완성된 도안</h3>
+      <div class="summary" id="summary"></div>
+      <div class="views">
+        <figure class="only-cross">
+          <canvas id="previewCanvas"></canvas>
+          <figcaption>수놓으면 이런 느낌이에요</figcaption>
+        </figure>
+        <figure class="chart">
+          <div class="scroll"><canvas id="chartCanvas"></canvas></div>
+          <figcaption id="chartCaption">도안 (굵은 선은 10칸마다)</figcaption>
+        </figure>
+      </div>
+      <h4>필요한 실</h4>
+      <p class="tip">DMC 실 번호는 사진 색과 가장 가까운 색을 고른 것이라, 실제 실 색과 조금 다를 수 있어요.</p>
+      <div class="legend" id="legend"></div>
+      <button class="btn main" id="downloadBtn" type="button">⬇️ 도안 이미지로 저장하기</button>
+    </div>
+
+    <!-- 4단계: 기법 추천 -->
+    <div class="step" id="recommend" hidden>
+      <h3><span class="num">4</span> 이 도안에 어울리는 기법</h3>
+      <div class="recs" id="recs"></div>
+    </div>
+  </section>
+
+  <footer>
+    © <span id="year"></span> 실과 흙 · 손으로 짓는 하루
+  </footer>
+
+  <script src="pattern.js"></script>
+</body>
+</html>
