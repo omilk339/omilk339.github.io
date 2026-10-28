@@ -190,6 +190,27 @@
 
   footer { font-size: 0.8125rem; color: var(--muted); }
 
+  /* 블로그 글 */
+  ul.list span.item { font-family: var(--serif); min-width: 0; }
+  .posts { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+  .posts h3 {
+    margin: 0; font-family: var(--sans); font-weight: 400; font-size: 0.75rem;
+    letter-spacing: 0.12em; color: var(--muted);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .chips button {
+    font: inherit; font-size: 0.8125rem; color: var(--muted); cursor: pointer;
+    background: none; border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.8rem;
+  }
+  .chips button:hover { color: var(--indigo); border-color: var(--indigo); }
+  .chips button[aria-pressed="true"] { color: var(--bg); background: var(--indigo); border-color: var(--indigo); }
+  .new {
+    font-family: var(--sans); font-size: 0.6875rem; color: var(--thread);
+    border: 1px solid var(--thread); border-radius: 999px; padding: 0 0.4rem; vertical-align: 0.1em; white-space: nowrap;
+  }
+  a.more { font-size: 0.875rem; color: var(--indigo); text-decoration: none; justify-self: start; }
+  a.more:hover { text-decoration: underline; }
+
   /* 언어 */
   nav .lang select {
     font: inherit; font-size: 0.8125rem; color: var(--muted);
@@ -250,10 +271,14 @@
     <h2><span data-t="h_farm">농사</span> <small>Farming</small></h2>
     <p data-t="farmP">주말마다 내려가는 시골집 텃밭에서 제철 작물을 기릅니다. 사흘만 머무는 농부라서 손이 덜 가는 작물을 골라 심습니다.</p>
     <ul class="list">
-      <li><a href="#farm" data-t="crop1">감자</a><span class="meta" data-t="crop1m">3월 심기 · 6월 캐기</span></li>
-      <li><a href="#farm" data-t="crop2">고추</a><span class="meta" data-t="crop2m">5월 심기 · 8월 따기</span></li>
-      <li><a href="#farm" data-t="crop3">김장 배추</a><span class="meta" data-t="crop3m">8월 심기 · 11월 거두기</span></li>
+      <li><span class="item" data-t="crop1">감자</span><span class="meta" data-t="crop1m">3월 심기 · 6월 캐기</span></li>
+      <li><span class="item" data-t="crop2">고추</span><span class="meta" data-t="crop2m">5월 심기 · 8월 따기</span></li>
+      <li><span class="item" data-t="crop3">김장 배추</span><span class="meta" data-t="crop3m">8월 심기 · 11월 거두기</span></li>
     </ul>
+    <div class="posts" id="farmPosts" hidden>
+      <h3 data-t="farmPosts">텃밭 일기</h3>
+      <ul class="list"></ul>
+    </div>
   </section>
 
   <hr class="stitch">
@@ -262,10 +287,14 @@
     <h2><span data-t="h_emb">자수</span> <small>Embroidery</small></h2>
     <p data-t="embP">시골집 마당에 피는 풀꽃을 실로 옮깁니다. 홈질과 사슬수, 프렌치노트처럼 기본 땀을 즐겨 씁니다.</p>
     <ul class="list">
-      <li><a href="#embroider" data-t="work1">마당의 쑥부쟁이</a><span class="meta" data-t="work1m">사슬수 · 새틴수</span></li>
-      <li><a href="#embroider" data-t="work2">손수건 모서리 이니셜</a><span class="meta" data-t="work2m">백스티치</span></li>
-      <li><a href="#embroider" data-t="work3">사시사철 풀꽃 샘플러</a><span class="meta" data-t="work3m">프렌치노트</span></li>
+      <li><span class="item" data-t="work1">마당의 쑥부쟁이</span><span class="meta" data-t="work1m">사슬수 · 새틴수</span></li>
+      <li><span class="item" data-t="work2">손수건 모서리 이니셜</span><span class="meta" data-t="work2m">백스티치</span></li>
+      <li><span class="item" data-t="work3">사시사철 풀꽃 샘플러</span><span class="meta" data-t="work3m">프렌치노트</span></li>
     </ul>
+    <div class="posts" id="embPosts" hidden>
+      <h3 data-t="embPosts">자수 일기</h3>
+      <ul class="list"></ul>
+    </div>
     <a class="maker" href="/embroidery/pattern.html">
       <b data-t="makerT">📷 내 사진으로 도안 만들기</b>
       <span data-t="makerD">사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
@@ -277,12 +306,14 @@
   <section id="write">
     <h2><span data-t="h_write">글쓰기</span> <small>Writing</small></h2>
     <p id="writeP">도시와 시골을 오가며 보고 만든 것들에 대해 씁니다. 모든 글은 <a class="inline" href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">네이버 블로그</a>에서 읽을 수 있습니다.</p>
-    <ul class="list">
+    <div class="chips" id="postChips" hidden></div>
+    <ul class="list" id="postList">
       <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post1">금요일 저녁, 시골로 가는 길</a><time datetime="2026-10-10">2026.10.10</time></li>
       <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post2">한 땀씩 느려지는 연습</a><time datetime="2026-09-26">2026.09.26</time></li>
       <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post3">처음 캔 감자 한 바구니</a><time datetime="2026-09-12">2026.09.12</time></li>
       <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post4">사흘의 시골, 나흘의 도시</a><time datetime="2026-08-29">2026.08.29</time></li>
     </ul>
+    <a class="more" id="postMore" href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" hidden data-t="more">블로그에서 더 보기 →</a>
   </section>
 
   <hr class="stitch">
@@ -303,5 +334,6 @@
   <footer>© 2026 사도삼촌 작업실</footer>
 </div>
 <script src="/home-i18n.js"></script>
+<script src="/home-posts.js"></script>
 </body>
 </html>

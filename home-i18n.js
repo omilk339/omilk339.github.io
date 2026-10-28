@@ -5,6 +5,8 @@ const LANGS = { ko: "한국어", en: "English", ja: "日本語", zh: "中文", r
 
 const HOME = {
   ko: {
+    farmPosts: "텃밭 일기", embPosts: "자수 일기", more: "블로그에서 더 보기 →", newBadge: "새 글",
+    cat_all: "전체", cat_farm: "시골집과 텃밭", cat_city: "도시의 일상", cat_trip: "여행", cat_emb: "자수",
     langLbl: "언어",
     nav_about: "소개", nav_farm: "농사", nav_emb: "자수", nav_maker: "도안 만들기", nav_write: "글", nav_contact: "연락",
     h1: "<span class=\"num\">4</span>일은 도시에서,<br><span class=\"num\">3</span>일은 시골에서.",
@@ -30,6 +32,8 @@ const HOME = {
     contactP: "작업이나 글에 대해 이야기하고 싶다면 편하게 메일 주세요."
   },
   en: {
+    farmPosts: "From the garden", embPosts: "Embroidery diary", more: "More on the blog →", newBadge: "New",
+    cat_all: "All", cat_farm: "Country & garden", cat_city: "City life", cat_trip: "Trips", cat_emb: "Embroidery",
     langLbl: "Language",
     nav_about: "About", nav_farm: "Farming", nav_emb: "Embroidery", nav_maker: "Pattern maker", nav_write: "Writing", nav_contact: "Contact",
     h1: "<span class=\"num\">4</span> days in the city,<br><span class=\"num\">3</span> days in the country.",
@@ -55,6 +59,8 @@ const HOME = {
     contactP: "If you'd like to talk about my work or writing, feel free to email me."
   },
   ja: {
+    farmPosts: "畑の日記", embPosts: "刺繍の日記", more: "ブログでもっと見る →", newBadge: "新着",
+    cat_all: "すべて", cat_farm: "田舎の家と畑", cat_city: "都会の日常", cat_trip: "旅", cat_emb: "刺繍",
     langLbl: "言語",
     nav_about: "紹介", nav_farm: "畑", nav_emb: "刺繍", nav_maker: "図案づくり", nav_write: "文章", nav_contact: "連絡",
     h1: "<span class=\"num\">4</span>日は都会で、<br><span class=\"num\">3</span>日は田舎で。",
@@ -80,6 +86,8 @@ const HOME = {
     contactP: "作品や文章についてお話ししたい方は、お気軽にメールをください。"
   },
   zh: {
+    farmPosts: "菜园日记", embPosts: "刺绣日记", more: "去博客看更多 →", newBadge: "新",
+    cat_all: "全部", cat_farm: "乡下与菜园", cat_city: "城市日常", cat_trip: "旅行", cat_emb: "刺绣",
     langLbl: "语言",
     nav_about: "介绍", nav_farm: "种田", nav_emb: "刺绣", nav_maker: "做图样", nav_write: "文章", nav_contact: "联系",
     h1: "<span class=\"num\">4</span>天在城市，<br><span class=\"num\">3</span>天在乡下。",
@@ -105,6 +113,8 @@ const HOME = {
     contactP: "如果想聊聊作品或文章，欢迎随时发邮件给我。"
   },
   ru: {
+    farmPosts: "Дневник огорода", embPosts: "Дневник вышивки", more: "Больше в блоге →", newBadge: "Новое",
+    cat_all: "Все", cat_farm: "Деревня и огород", cat_city: "Городская жизнь", cat_trip: "Поездки", cat_emb: "Вышивка",
     langLbl: "Язык",
     nav_about: "О себе", nav_farm: "Огород", nav_emb: "Вышивка", nav_maker: "Схема из фото", nav_write: "Тексты", nav_contact: "Контакты",
     h1: "<span class=\"num\">4</span> дня в городе,<br><span class=\"num\">3</span> дня в деревне.",
@@ -130,6 +140,8 @@ const HOME = {
     contactP: "Если хотите поговорить о работах или текстах, смело пишите мне на почту."
   },
   fr: {
+    farmPosts: "Journal du potager", embPosts: "Journal de broderie", more: "Plus sur le blog →", newBadge: "Nouveau",
+    cat_all: "Tout", cat_farm: "Campagne & potager", cat_city: "Vie en ville", cat_trip: "Escapades", cat_emb: "Broderie",
     langLbl: "Langue",
     nav_about: "À propos", nav_farm: "Potager", nav_emb: "Broderie", nav_maker: "Créer un motif", nav_write: "Écrits", nav_contact: "Contact",
     h1: "<span class=\"num\">4</span> jours en ville,<br><span class=\"num\">3</span> jours à la campagne.",
@@ -155,6 +167,8 @@ const HOME = {
     contactP: "Pour parler de mes travaux ou de mes écrits, n'hésitez pas à m'écrire."
   },
   vi: {
+    farmPosts: "Nhật ký vườn", embPosts: "Nhật ký thêu", more: "Xem thêm trên blog →", newBadge: "Mới",
+    cat_all: "Tất cả", cat_farm: "Nhà quê & vườn", cat_city: "Đời sống phố", cat_trip: "Du lịch", cat_emb: "Thêu",
     langLbl: "Ngôn ngữ",
     nav_about: "Giới thiệu", nav_farm: "Làm vườn", nav_emb: "Thêu", nav_maker: "Tạo mẫu thêu", nav_write: "Bài viết", nav_contact: "Liên hệ",
     h1: "<span class=\"num\">4</span> ngày ở thành phố,<br><span class=\"num\">3</span> ngày ở quê.",
@@ -208,6 +222,7 @@ function applyHome(lang) {
   link.textContent = d.blog;
   p.replaceChildren(before, link, after);
   document.getElementById("langSelect").value = lang;
+  document.dispatchEvent(new Event("langchange"));
 }
 
 (function () {
