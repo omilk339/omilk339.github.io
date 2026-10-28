@@ -1,23 +1,18 @@
 // ===== 블로그 최신 글 =====
 // posts.json은 GitHub Actions가 1시간마다 네이버 블로그 RSS에서 새로 만들어요.
 // 불러오지 못하면 HTML에 적어 둔 기존 목록이 그대로 보여요.
+// 같은 글이 두 번 나오지 않게: 텃밭 글은 농사 칸에, 자수 글은 자수 칸에, 나머지는 글쓰기 칸에.
 
-// 블로그 카테고리 → 첫 화면 묶음
-// main: 처음 보이는 묶음. 사이트 주제(시골·자수)에 맞는 글을 먼저 보여 줘요
 const POST_GROUPS = {
-  main: ["시골집과 텃밭", "4도3촌 생활", "자수작업 일기", "자수 특강 안내"],
   farm: ["시골집과 텃밭"],
-  city: ["도시의 일상"],
-  trip: ["도시에서 다녀온 짧은 여행", "파크골프장 투어"],
   emb: ["자수작업 일기", "자수 특강 안내"]
 };
-const NEW_DAYS = 3;   // 며칠 안에 올린 글을 '새 글'로 표시할지
+const SECTION_COUNT = 3;   // 농사·자수 칸에 보여 줄 글 수
+const WRITE_COUNT = 3;     // 글쓰기 칸에 보여 줄 글 수
+// 글쓰기 칸에서 먼저 보여 줄 카테고리 (사이트 주제에 가까운 순서). 나머지는 최신순
+const WRITE_FIRST = ["4도3촌 생활", "도시에서 다녀온 짧은 여행"];
 
 let posts = null;
-let group = "main";
-
-const inGroup = (p, g) => g === "all" || POST_GROUPS[g].includes(p.category);
-const homeT = key => HOME[document.documentElement.lang]?.[key] ?? HOME.ko[key];
 
 function postItem(p) {
   const li = document.createElement("li");
@@ -26,68 +21,32 @@ function postItem(p) {
   a.target = "_blank";
   a.rel = "noopener";
   a.textContent = p.title;
-  if ((Date.now() - new Date(p.date)) / 864e5 < NEW_DAYS) {
-    const b = document.createElement("span");
-    b.className = "new";
-    b.textContent = homeT("newBadge");
-    a.append(" ", b);
-  }
   const time = document.createElement("time");
   time.dateTime = p.date;
   time.textContent = p.date.replaceAll("-", ".");
-  // 글 대표 사진 (누르면 글로 가요)
-  const pic = document.createElement("a");
-  pic.className = "thumb";
-  pic.href = p.url;
-  pic.target = "_blank";
-  pic.rel = "noopener";
-  pic.tabIndex = -1;
-  pic.setAttribute("aria-hidden", "true");
-  if (p.thumb) {
-    const img = new Image(100, 100);
-    img.src = "/" + p.thumb;
-    img.alt = "";
-    img.loading = "lazy";
-    img.decoding = "async";
-    pic.append(img);
-  }
-  li.classList.add("with-thumb");
-  li.append(pic, a, time);
+  li.append(a, time);
   return li;
-}
-
-function renderPostList(ul, list) {
-  ul.replaceChildren(...list.map(postItem));
 }
 
 function renderPosts() {
   if (!posts) return;
-  // 글쓰기: 카테고리 버튼 + 최신 5개
-  const chips = document.getElementById("postChips");
-  chips.replaceChildren();
-  ["main", "all", "farm", "city", "trip", "emb"].filter(g => posts.some(p => inGroup(p, g))).forEach(g => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = homeT("cat_" + g);
-    b.setAttribute("aria-pressed", g === group);
-    b.onclick = () => { group = g; renderPosts(); };
-    chips.append(b);
-  });
-  chips.hidden = false;
-  renderPostList(document.getElementById("postList"), posts.filter(p => inGroup(p, group)).slice(0, 5));
-  document.getElementById("postMore").hidden = false;
-
-  // 농사·자수 칸: 그 카테고리 최신 3개
+  const shown = new Set();
   [["farmPosts", "farm"], ["embPosts", "emb"]].forEach(([id, g]) => {
-    const box = document.getElementById(id), list = posts.filter(p => inGroup(p, g)).slice(0, 3);
+    const box = document.getElementById(id);
+    const list = posts.filter(p => POST_GROUPS[g].includes(p.category)).slice(0, SECTION_COUNT);
+    list.forEach(p => shown.add(p.url));
     box.hidden = !list.length;
-    renderPostList(box.querySelector("ul"), list);
+    box.querySelector("ul").replaceChildren(...list.map(postItem));
   });
+  const rank = p => { const i = WRITE_FIRST.indexOf(p.category); return i < 0 ? WRITE_FIRST.length : i; };
+  const rest = posts.filter(p => !shown.has(p.url))
+    .map((p, i) => [p, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([p]) => p)
+    .slice(0, WRITE_COUNT);
+  document.getElementById("postList").replaceChildren(...rest.map(postItem));
+  document.getElementById("postMore").hidden = false;
 }
 
 fetch("/posts.json", { cache: "no-cache" })
   .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
   .then(d => { posts = d.posts; renderPosts(); })
   .catch(() => {});   // 못 불러오면 기존 목록 그대로
-
-document.addEventListener("langchange", renderPosts);

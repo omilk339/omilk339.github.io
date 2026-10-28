@@ -46,7 +46,6 @@ function renderGarden() {
     </div>
     <p class="legend-row">
       <span><i class="cell plant"></i></span><span><i class="cell grow"></i></span><span><i class="cell harvest"></i></span>
-      <small></small>
     </p>`;
   // 글자는 textContent로 (번역 문구에 특수문자가 있어도 안전하게)
   box.querySelector(".now-line b").textContent = d.nowLbl.replace("{m}", monthName);
@@ -55,7 +54,6 @@ function renderGarden() {
   box.querySelectorAll(".crop").forEach((a, i) => { a.textContent = d[CROPS[i].key]; });
   const legend = box.querySelectorAll(".legend-row > span");
   ["plant", "grow", "harvest"].forEach((s, i) => legend[i].append(d["leg_" + s]));
-  box.querySelector(".legend-row small").textContent = d.calHint;
 }
 
 renderGarden();
