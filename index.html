@@ -75,7 +75,27 @@
   nav a:hover { color: var(--indigo); }
   a:focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; border-radius: 2px; }
 
-  header { display: grid; gap: 1rem; }
+  header { display: grid; gap: 1rem; grid-template-columns: 1fr auto; align-items: center; }
+  header > :not(.hoop) { grid-column: 1; }
+  /* 수틀: 사이트 색만 (테두리 회색, 천은 바탕색, 실은 붉은 실·쪽빛·회색) */
+  .hoop {
+    grid-column: 2; grid-row: 1 / span 2;
+    width: 9.5rem; aspect-ratio: 1; border-radius: 50%;
+    border: 6px solid var(--line); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--line);
+    background:
+      radial-gradient(circle, color-mix(in srgb, var(--fg) 7%, transparent) 0.6px, transparent 0.8px) 0 0 / 9px 9px,
+      color-mix(in srgb, var(--indigo) 4%, var(--bg));
+    display: grid; place-items: center; overflow: hidden;
+  }
+  .hoop svg { width: 74%; height: 74%; fill: none; stroke-width: 0.26; stroke-linecap: round; }
+  .hoop .st-t { stroke: var(--thread); }
+  .hoop .st-i { stroke: var(--indigo); }
+  .hoop .st-m { stroke: var(--muted); }
+  /* 휴대폰: 제목이 좁아지지 않게 수틀을 제목 위 작은 표식으로 */
+  @media (max-width: 520px) {
+    header { grid-template-columns: 1fr; }
+    .hoop { grid-column: 1; grid-row: auto; order: -1; width: 4.75rem; border-width: 4px; justify-self: start; }
+  }
   h1 {
     font-family: var(--serif);
     font-weight: 700;
@@ -203,8 +223,39 @@
 
   footer { font-size: 0.8125rem; color: var(--muted); }
 
+  /* 텃밭 달력 */
+  .garden { display: grid; gap: 0.6rem; }
+  .now-line { font-size: 0.9375rem; }
+  .now-line b { color: var(--indigo); font-weight: 400; font-family: var(--serif); margin-right: 0.25rem; }
+  .cal {
+    display: grid; grid-template-columns: minmax(4.5rem, max-content) repeat(12, 1fr);
+    gap: 0.3rem 0.2rem; align-items: center;
+  }
+  .cal .m { font-size: 0.6875rem; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+  .cal .m.now { color: var(--bg); background: var(--indigo); border-radius: 999px; }
+  .cal .crop {
+    font-family: var(--serif); color: var(--fg); text-decoration: none; padding-right: 0.5rem;
+    border-bottom: 1px dashed var(--line); justify-self: start;
+  }
+  .cal .crop:hover { color: var(--indigo); border-color: var(--indigo); }
+  .cell { display: block; height: 0.6rem; border-radius: 2px; background: color-mix(in srgb, var(--line) 45%, transparent); }
+  .cell.plant { background: var(--thread); opacity: 0.85; }
+  .cell.grow { background: color-mix(in srgb, var(--indigo) 30%, transparent); }
+  .cell.harvest { background: var(--indigo); }
+  .cal .cell.now { outline: 1.5px solid var(--fg); outline-offset: 1px; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; align-items: center; font-size: 0.8125rem; color: var(--muted); }
+  .legend-row span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend-row .cell { width: 1.1rem; }
+  .legend-row small { flex-basis: 100%; font-size: 0.75rem; }
+
   /* 블로그 글 */
   ul.list span.item { font-family: var(--serif); min-width: 0; }
+  ul.list li.with-thumb { grid-template-columns: auto 1fr auto; align-items: center; gap: 0.85rem; }
+  ul.list a.thumb {
+    width: 3.25rem; height: 3.25rem; border-radius: 0.4rem; overflow: hidden; display: block;
+    background: color-mix(in srgb, var(--line) 50%, transparent);
+  }
+  ul.list a.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .posts { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
   .posts h3 {
     margin: 0; font-family: var(--sans); font-weight: 400; font-size: 0.75rem;
@@ -273,6 +324,7 @@
   </nav>
 
   <header>
+    <div class="hoop" aria-hidden="true"><svg id="hoopStitch"></svg></div>
     <h1 data-t-html="h1"><span class="num">4</span>일은 도시에서,<br><span class="num">3</span>일은 시골에서.</h1>
     <p class="lede" data-t="lede">농사를 짓고, 수를 놓고, 글을 씁니다. 손으로 천천히 기르고 만드는 것들을 이곳에 모아 둡니다.</p>
   </header>
@@ -299,11 +351,7 @@
   <section id="farm">
     <h2><span data-t="h_farm">농사</span> <small>Farming</small></h2>
     <p data-t="farmP">주말마다 내려가는 시골집 텃밭에서 제철 작물을 기릅니다. 사흘만 머무는 농부라서 손이 덜 가는 작물을 골라 심습니다.</p>
-    <ul class="list">
-      <li><span class="item" data-t="crop1">감자</span><span class="meta" data-t="crop1m">3월 심기 · 6월 캐기</span></li>
-      <li><span class="item" data-t="crop2">고추</span><span class="meta" data-t="crop2m">5월 심기 · 8월 따기</span></li>
-      <li><span class="item" data-t="crop3">김장 배추</span><span class="meta" data-t="crop3m">8월 심기 · 11월 거두기</span></li>
-    </ul>
+    <div class="garden" id="garden"></div>
     <div class="posts" id="farmPosts" hidden>
       <h3 data-t="farmPosts">텃밭 일기</h3>
       <ul class="list"></ul>
@@ -334,9 +382,9 @@
       <a class="more" href="https://www.instagram.com/stitch_trip/" target="_blank" rel="noopener" data-t="instaMore">@stitch_trip에서 더 보기 →</a>
     </div>
     <ul class="list">
-      <li><span class="item" data-t="work1">마당의 쑥부쟁이</span><span class="meta" data-t="work1m">사슬수 · 새틴수</span></li>
-      <li><span class="item" data-t="work2">손수건 모서리 이니셜</span><span class="meta" data-t="work2m">백스티치</span></li>
-      <li><span class="item" data-t="work3">사시사철 풀꽃 샘플러</span><span class="meta" data-t="work3m">프렌치노트</span></li>
+      <li><a href="https://blog.naver.com/PostSearchList.naver?blogId=simplehi-&amp;orderType=sim&amp;searchText=%EC%91%A5%EB%B6%80%EC%9F%81%EC%9D%B4" target="_blank" rel="noopener" data-t="work1">마당의 쑥부쟁이</a><span class="meta" data-t="work1m">사슬수 · 새틴수</span></li>
+      <li><a href="https://blog.naver.com/PostSearchList.naver?blogId=simplehi-&amp;orderType=sim&amp;searchText=%EC%9D%B4%EB%8B%88%EC%85%9C" target="_blank" rel="noopener" data-t="work2">손수건 모서리 이니셜</a><span class="meta" data-t="work2m">백스티치</span></li>
+      <li><a href="https://blog.naver.com/PostSearchList.naver?blogId=simplehi-&amp;orderType=sim&amp;searchText=%EC%83%98%ED%94%8C%EB%9F%AC" target="_blank" rel="noopener" data-t="work3">사시사철 풀꽃 샘플러</a><span class="meta" data-t="work3m">프렌치노트</span></li>
     </ul>
     <div class="posts" id="embPosts" hidden>
       <h3 data-t="embPosts">자수 일기</h3>
@@ -386,7 +434,9 @@
 
   <footer>© 2026 사도삼촌 작업실</footer>
 </div>
-<script src="/home-i18n.js?v=20261028b"></script>
-<script src="/home-posts.js?v=20261028b"></script>
+<script src="/home-i18n.js?v=20261028c"></script>
+<script src="/home-posts.js?v=20261028c"></script>
+<script src="/home-garden.js?v=20261028c"></script>
+<script src="/home-hoop.js?v=20261028c"></script>
 </body>
 </html>

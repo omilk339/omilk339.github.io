@@ -35,7 +35,24 @@ function postItem(p) {
   const time = document.createElement("time");
   time.dateTime = p.date;
   time.textContent = p.date.replaceAll("-", ".");
-  li.append(a, time);
+  // 글 대표 사진 (누르면 글로 가요)
+  const pic = document.createElement("a");
+  pic.className = "thumb";
+  pic.href = p.url;
+  pic.target = "_blank";
+  pic.rel = "noopener";
+  pic.tabIndex = -1;
+  pic.setAttribute("aria-hidden", "true");
+  if (p.thumb) {
+    const img = new Image(100, 100);
+    img.src = "/" + p.thumb;
+    img.alt = "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    pic.append(img);
+  }
+  li.classList.add("with-thumb");
+  li.append(pic, a, time);
   return li;
 }
 
