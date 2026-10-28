@@ -836,13 +836,51 @@ function exportPNG() {
     ctx.textAlign = "left"; ctx.fillStyle = "#3b3127"; ctx.font = "13px sans-serif";
     ctx.fillText(`DMC ${p.d.code}  ${p.d.name}  ·  ${countText(res, p)}`, x + 28, yy + 11);
   });
-  out.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = { cross: "십자수도안.png", french: "프랑스자수밑그림.png", line: "선도안.png" }[mode];
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
+  // 아이폰은 버튼을 누른 직후에만 공유창을 열 수 있어서, 기다리지 않고 바로 만들어요
+  const bin = atob(out.toDataURL("image/png").split(",")[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const name = { cross: "십자수도안.png", french: "프랑스자수밑그림.png", line: "선도안.png" }[mode];
+  const file = new File([bytes], name, { type: "image/png" });
+  const phone = matchMedia("(pointer: coarse)").matches;
+
+  // 휴대폰: 공유창에서 '이미지 저장'을 고르면 사진 앱(갤러리)에 들어가요
+  if (phone && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: name }).catch(e => { if (e.name !== "AbortError") showSaveSheet(file); });
+  } else if (phone) {
+    showSaveSheet(file);
+  } else {
+    downloadFile(file);
+  }
+}
+
+function downloadFile(file) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// 공유창을 못 여는 휴대폰: 이미지를 크게 띄워 길게 눌러 저장하게
+function showSaveSheet(file) {
+  const url = URL.createObjectURL(file);
+  const box = document.createElement("div");
+  box.className = "save-sheet";
+  box.innerHTML = `<div class="box">
+      <p><b>이미지를 손가락으로 길게 누르세요</b><br>
+      아이폰은 <b>'사진 앱에 저장'</b>, 안드로이드는 <b>'이미지 다운로드'</b>를 고르면 사진첩에 저장돼요.</p>
+      <img alt="저장할 도안">
+      <div class="row"><button type="button" class="btn" data-act="file">파일로 내려받기</button>
+      <button type="button" class="btn main" data-act="close">닫기</button></div>
+    </div>`;
+  box.querySelector("img").src = url;
+  box.onclick = e => {
+    const act = e.target.dataset.act;
+    if (act === "file") downloadFile(file);
+    if (act === "close" || e.target === box) { box.remove(); URL.revokeObjectURL(url); }
+  };
+  document.body.appendChild(box);
 }
 
 // ===== 화면 갱신 =====
