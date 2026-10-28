@@ -233,9 +233,9 @@ function pickLang() {
 function applyHome(lang) {
   const d = HOME[lang];
   document.documentElement.lang = lang;
-  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = d[el.dataset.t]; });
+  document.querySelectorAll("[data-t]").forEach(el => { if (d[el.dataset.t] != null) el.textContent = d[el.dataset.t]; });
   document.querySelectorAll("[data-t-alt]").forEach(el => { el.alt = d[el.dataset.tAlt]; });
-  document.querySelectorAll("[data-t-html]").forEach(el => { el.innerHTML = d[el.dataset.tHtml]; });
+  document.querySelectorAll("[data-t-html]").forEach(el => { if (d[el.dataset.tHtml] != null) el.innerHTML = d[el.dataset.tHtml]; });
   document.querySelectorAll(".week .day").forEach((el, i) => { el.lastChild.textContent = d.days[i]; });
   document.querySelector(".week").setAttribute("aria-label", d.weekAria);
   // 블로그 링크는 그대로 두고 앞뒤 문장만 바꾸기
