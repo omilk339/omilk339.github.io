@@ -174,6 +174,20 @@
   .nav-social svg { width: 1.0625rem; height: 1.0625rem; }
   @media (prefers-reduced-motion: reduce) { .social a { transition: none; } }
 
+  /* 도안 만들기 바로가기 */
+  a.maker {
+    display: grid;
+    gap: 0.25rem;
+    padding: 1rem 1.125rem;
+    border: 2px dashed var(--thread);
+    border-radius: 0.75rem;
+    color: var(--fg);
+    text-decoration: none;
+  }
+  a.maker b { font-family: var(--serif); color: var(--thread); }
+  a.maker span { font-size: 0.875rem; color: var(--muted); }
+  a.maker:hover { border-style: solid; }
+
   footer { font-size: 0.8125rem; color: var(--muted); }
 </style>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}</style>
@@ -185,6 +199,7 @@
     <a href="#about">소개</a>
     <a href="#farm">농사</a>
     <a href="#embroider">자수</a>
+    <a href="/embroidery/pattern.html">도안 만들기</a>
     <a href="#write">글</a>
     <a href="#contact">연락</a>
     <span class="nav-social">
@@ -238,6 +253,10 @@
       <li><a href="#embroider">손수건 모서리 이니셜</a><span class="meta">백스티치</span></li>
       <li><a href="#embroider">사시사철 풀꽃 샘플러</a><span class="meta">프렌치노트</span></li>
     </ul>
+    <a class="maker" href="/embroidery/pattern.html">
+      <b>📷 내 사진으로 도안 만들기</b>
+      <span>사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
+    </a>
   </section>
 
   <hr class="stitch">
