@@ -5,6 +5,7 @@ const LANGS = { ko: "한국어", en: "English", ja: "日本語", zh: "中文", r
 
 const HOME = {
   ko: {
+    mailShow: "메일 주소 보기", mailCopy: "복사", mailCopied: "복사했어요 ✓",
     instaTitle: "인스타그램 고정 작품", instaMore: "@stitch_trip에서 더 보기 →", insta1: "꽃과 자동차, 프렌치노트 자수", insta2: "한련잎 입체 자수", insta3: "미니어처 화분 자수",
     cat_main: "시골·자수",
     farmPosts: "텃밭 일기", embPosts: "자수 일기", more: "블로그에서 더 보기 →", newBadge: "새 글",
@@ -34,6 +35,7 @@ const HOME = {
     contactP: "작업이나 글에 대해 이야기하고 싶다면 편하게 메일 주세요."
   },
   en: {
+    mailShow: "Show email address", mailCopy: "Copy", mailCopied: "Copied ✓",
     instaTitle: "Pinned on Instagram", instaMore: "More on @stitch_trip →", insta1: "Flowers & car, French knots", insta2: "3D nasturtium leaves", insta3: "Miniature potted plants",
     cat_main: "Country & stitching",
     farmPosts: "From the garden", embPosts: "Embroidery diary", more: "More on the blog →", newBadge: "New",
@@ -63,6 +65,7 @@ const HOME = {
     contactP: "If you'd like to talk about my work or writing, feel free to email me."
   },
   ja: {
+    mailShow: "メールアドレスを表示", mailCopy: "コピー", mailCopied: "コピーしました ✓",
     instaTitle: "インスタグラムのピン留め作品", instaMore: "@stitch_tripでもっと見る →", insta1: "花と車、フレンチノット刺繍", insta2: "ナスタチウムの葉の立体刺繍", insta3: "ミニチュア鉢植え刺繍",
     cat_main: "田舎と刺繍",
     farmPosts: "畑の日記", embPosts: "刺繍の日記", more: "ブログでもっと見る →", newBadge: "新着",
@@ -92,6 +95,7 @@ const HOME = {
     contactP: "作品や文章についてお話ししたい方は、お気軽にメールをください。"
   },
   zh: {
+    mailShow: "显示邮箱地址", mailCopy: "复制", mailCopied: "已复制 ✓",
     instaTitle: "Instagram置顶作品", instaMore: "去@stitch_trip看更多 →", insta1: "花与汽车，法式结粒绣", insta2: "旱金莲叶立体刺绣", insta3: "迷你盆栽刺绣",
     cat_main: "乡下与刺绣",
     farmPosts: "菜园日记", embPosts: "刺绣日记", more: "去博客看更多 →", newBadge: "新",
@@ -121,6 +125,7 @@ const HOME = {
     contactP: "如果想聊聊作品或文章，欢迎随时发邮件给我。"
   },
   ru: {
+    mailShow: "Показать адрес почты", mailCopy: "Копировать", mailCopied: "Скопировано ✓",
     instaTitle: "Закреплено в Instagram", instaMore: "Больше в @stitch_trip →", insta1: "Цветы и машина, французские узелки", insta2: "Объёмные листья настурции", insta3: "Миниатюрные растения в горшках",
     cat_main: "Деревня и вышивка",
     farmPosts: "Дневник огорода", embPosts: "Дневник вышивки", more: "Больше в блоге →", newBadge: "Новое",
@@ -150,6 +155,7 @@ const HOME = {
     contactP: "Если хотите поговорить о работах или текстах, смело пишите мне на почту."
   },
   fr: {
+    mailShow: "Afficher l'adresse e-mail", mailCopy: "Copier", mailCopied: "Copié ✓",
     instaTitle: "Épinglé sur Instagram", instaMore: "Plus sur @stitch_trip →", insta1: "Fleurs et voiture, points de nœud", insta2: "Feuilles de capucine en relief", insta3: "Plantes miniatures en pot",
     cat_main: "Campagne & broderie",
     farmPosts: "Journal du potager", embPosts: "Journal de broderie", more: "Plus sur le blog →", newBadge: "Nouveau",
@@ -179,6 +185,7 @@ const HOME = {
     contactP: "Pour parler de mes travaux ou de mes écrits, n'hésitez pas à m'écrire."
   },
   vi: {
+    mailShow: "Hiện địa chỉ email", mailCopy: "Sao chép", mailCopied: "Đã sao chép ✓",
     instaTitle: "Ghim trên Instagram", instaMore: "Xem thêm trên @stitch_trip →", insta1: "Hoa và xe hơi, mũi nút Pháp", insta2: "Lá sen cạn thêu nổi", insta3: "Chậu cây thêu thu nhỏ",
     cat_main: "Quê & thêu",
     farmPosts: "Nhật ký vườn", embPosts: "Nhật ký thêu", more: "Xem thêm trên blog →", newBadge: "Mới",
@@ -239,6 +246,24 @@ function applyHome(lang) {
   document.getElementById("langSelect").value = lang;
   document.dispatchEvent(new Event("langchange"));
 }
+
+// ===== 메일 주소 =====
+// 주소를 페이지에 그대로 적어 두면 스팸 수집 프로그램이 가져가서, 버튼을 누를 때만 조립해요
+(function () {
+  const addr = ["moc.liamg", "933klimo"].map(s => [...s].reverse().join("")).reverse().join("@");
+  const link = document.getElementById("mailLink"), copy = document.getElementById("mailCopy");
+  document.getElementById("mailReveal").addEventListener("click", e => {
+    link.href = "mailto:" + addr;
+    link.textContent = addr;
+    e.target.hidden = true;
+    document.getElementById("mailBox").hidden = false;
+  });
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(addr); } catch (err) { return; }
+    copy.textContent = HOME[document.documentElement.lang].mailCopied;
+    setTimeout(() => { copy.textContent = HOME[document.documentElement.lang].mailCopy; }, 2000);
+  });
+})();
 
 (function () {
   const sel = document.getElementById("langSelect");
