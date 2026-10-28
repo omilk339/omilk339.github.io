@@ -470,7 +470,19 @@ function drawCutout(canvas, res) {
 // 선 픽셀마다 작은 원을 찍어 매끈한 선으로 (바깥 윤곽선은 조금 더 굵게)
 function drawLine(canvas, res, thick) {
   const S = 3, { W, H } = res;
-  canvas.width = W * S; canvas.height = H * S;
+  // 선이 있는 곳만 잘라내기 (주인공이 종이에 꽉 차게)
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let p = 0; p < W * H; p++) {
+    if (!res.inner[p] && !res.outer[p]) continue;
+    const x = p % W, y = (p - x) / W;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  if (x1 < 0) { x0 = 0; y0 = 0; x1 = W - 1; y1 = H - 1; }
+  const pad = 6;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+  x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+  res.cropW = x1 - x0 + 1;
+  canvas.width = res.cropW * S; canvas.height = (y1 - y0 + 1) * S;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = res.pal[0].d.hex;
@@ -479,7 +491,7 @@ function drawLine(canvas, res, thick) {
     ctx.beginPath();
     edges.forEach((v, p) => {
       if (!v) return;
-      const x = (p % W) * S + S / 2, y = Math.floor(p / W) * S + S / 2;
+      const x = (p % W - x0) * S + S / 2, y = (Math.floor(p / W) - y0) * S + S / 2;
       ctx.moveTo(x + rad, y);
       ctx.arc(x, y, rad, 0, Math.PI * 2);
     });
@@ -530,11 +542,11 @@ function drawCross(canvas, res) {
   };
   for (let x = 0; x <= W; x++) line(m + x * cell, m, m + x * cell, m + H * cell, x % 10 === 0 || x === W);
   for (let y = 0; y <= H; y++) line(m, m + y * cell, m + W * cell, m + y * cell, y % 10 === 0 || y === H);
-  ctx.fillStyle = "#7a6c5d"; ctx.font = "11px sans-serif";
+  ctx.fillStyle = "#6b6f78"; ctx.font = "11px sans-serif";
   for (let x = 10; x <= W; x += 10) ctx.fillText(x, m + x * cell, m - 12);
   for (let y = 10; y <= H; y += 10) ctx.fillText(y, m - 14, m + y * cell);
   // 가운데 표시 (여기서부터 수놓기 시작하면 천 가운데에 와요)
-  ctx.fillStyle = "#c0504d";
+  ctx.fillStyle = "#b04a3a";
   const cx = m + W * cell / 2, cy = m + H * cell / 2;
   ctx.beginPath(); ctx.moveTo(cx - 6, m - 6); ctx.lineTo(cx + 6, m - 6); ctx.lineTo(cx, m); ctx.fill();
   ctx.beginPath(); ctx.moveTo(m - 6, cy - 6); ctx.lineTo(m - 6, cy + 6); ctx.lineTo(m, cy); ctx.fill();
@@ -566,7 +578,7 @@ function drawFrench(canvas, res, tint) {
     if (d < b.d) { b.d = d; b.x = x; b.y = y; }
   }
   ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.fillStyle = "#3b3127";
+  ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.fillStyle = "#24262b";
   const placed = [];
   list.map((c, i) => [c, best[i]]).filter(([c]) => c.area >= res.minArea * 1.2)
     .sort((a, b) => b[0].area - a[0].area)
@@ -580,7 +592,12 @@ function drawFrench(canvas, res, tint) {
 }
 
 // ===== 실 목록 =====
-const lineCm = res => Math.round((res.nIn + res.nOut) * 12 / res.W);   // 가로 12cm로 수놓을 때
+// 고른 수틀에 맞춘 도안 크기로 수놓을 때의 선 길이
+const designCm = () => HOOP_DESIGN[+$("hoop").value];
+const lineCm = res => {
+  const c = $("chartCanvas"), longSide = Math.max(c.width, c.height) / 3;   // 선 도안은 3배로 그려요
+  return Math.round((res.nIn + res.nOut) * designCm() / longSide);
+};
 
 function countText(res, p) {
   if (mode === "cross") return `${p.count.toLocaleString()}땀`;
@@ -771,7 +788,7 @@ function renderLineSummary(res) {
   const level = f.density < 0.05 ? "쉬움 🌱" : f.density < 0.09 ? "보통 🌿" : "도전 🌳";
   const chips = [
     mask ? "✂️ 배경 지움" : "🖼️ 배경 그대로",
-    `〰 가로 12cm로 놓으면 선 길이 약 ${cm}cm`,
+    `〰 ${$("hoop").value}cm 수틀(도안 ${designCm()}cm)로 놓으면 선 길이 약 ${cm}cm`,
     `🧵 ${res.pal[0].d.name} ${f.strands}가닥 · ${skeins}타래면 충분`,
     `난이도 ${level}`
   ];
@@ -805,7 +822,10 @@ function renderSummary(res, f) {
 }
 
 // ===== 저장하기 =====
-function exportPNG() {
+const TITLE = { cross: "십자수 도안", french: "프랑스 자수 밑그림", line: "선 도안" };
+
+// 도안 + 실 목록을 한 장의 이미지로
+function buildExport() {
   const chart = $("chartCanvas"), res = lastRes;
   const pad = 24, rowH = 28, head = 64;
   const W = Math.max(chart.width, 560) + pad * 2;
@@ -815,16 +835,15 @@ function exportPNG() {
   out.width = W; out.height = head + chart.height + 56 + rows * rowH + pad;
   const ctx = out.getContext("2d");
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, out.width, out.height);
-  ctx.fillStyle = "#3b3127"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#24262b"; ctx.textBaseline = "middle";
   ctx.font = "bold 20px sans-serif";
-  const title = { cross: "십자수 도안", french: "프랑스 자수 밑그림", line: "선 도안" };
-  const sub = { cross: `${res.W} × ${res.H}칸 · 실 ${res.pal.length}색 · 실과 흙`, french: `실 ${res.pal.length}색 · 실과 흙`, line: "굵은 선은 바깥 윤곽 · 실과 흙" };
-  ctx.fillText(title[mode], pad, 26);
-  ctx.font = "13px sans-serif"; ctx.fillStyle = "#7a6c5d";
+  const sub = { cross: `${res.W} × ${res.H}칸 · 실 ${res.pal.length}색 · 사도삼촌 작업실`, french: `실 ${res.pal.length}색 · 사도삼촌 작업실`, line: "굵은 선은 바깥 윤곽 · 사도삼촌 작업실" };
+  ctx.fillText(TITLE[mode], pad, 26);
+  ctx.font = "13px sans-serif"; ctx.fillStyle = "#6b6f78";
   ctx.fillText(sub[mode], pad, 48);
   ctx.drawImage(chart, pad, head);
   let y = head + chart.height + 28;
-  ctx.fillStyle = "#3b3127"; ctx.font = "bold 15px sans-serif";
+  ctx.fillStyle = "#24262b"; ctx.font = "bold 15px sans-serif";
   ctx.fillText("필요한 실", pad, y);
   y += 24;
   res.pal.forEach((p, i) => {
@@ -833,9 +852,14 @@ function exportPNG() {
     ctx.strokeStyle = "#ccc"; ctx.strokeRect(x + 0.5, yy + 0.5, 19, 19);
     ctx.fillStyle = textColor(p.d); ctx.textAlign = "center"; ctx.font = "bold 12px sans-serif";
     ctx.fillText(mode === "cross" ? p.sym : p.num, x + 10, yy + 11);
-    ctx.textAlign = "left"; ctx.fillStyle = "#3b3127"; ctx.font = "13px sans-serif";
+    ctx.textAlign = "left"; ctx.fillStyle = "#24262b"; ctx.font = "13px sans-serif";
     ctx.fillText(`DMC ${p.d.code}  ${p.d.name}  ·  ${countText(res, p)}`, x + 28, yy + 11);
   });
+  return out;
+}
+
+function exportPNG() {
+  const out = buildExport();
   // 아이폰은 버튼을 누른 직후에만 공유창을 열 수 있어서, 기다리지 않고 바로 만들어요
   const bin = atob(out.toDataURL("image/png").split(",")[1]);
   const bytes = new Uint8Array(bin.length);
@@ -852,6 +876,63 @@ function exportPNG() {
   } else {
     downloadFile(file);
   }
+}
+
+// ===== 실제 크기로 인쇄하기 =====
+// 수틀 안쪽에 여유를 두고 도안 긴 쪽 길이(cm)를 정해요
+const HOOP_DESIGN = { 10: 7, 12: 9, 15: 11, 18: 13, 20: 15 };
+const PRINT_WIDTH = 19.4;   // A4(21cm)에서 여백 8mm씩 뺀 폭
+
+function printPattern() {
+  const area = $("printArea"), res = lastRes;
+  area.innerHTML = "";
+  const h1 = document.createElement("h1");
+  h1.textContent = TITLE[mode];
+  const meta = document.createElement("p");
+  meta.className = "meta";
+  const img = new Image();
+  area.append(h1, meta);
+
+  if (mode === "cross") {
+    // 십자수는 칸을 세며 보는 도안이라 종이 폭에 맞춰요
+    const cm = v => (v / 14 * 2.54).toFixed(1);
+    meta.textContent = `${res.W} × ${res.H}칸 · 14칸 아이다 천에 놓으면 약 ${cm(res.W)} × ${cm(res.H)}cm · 사도삼촌 작업실`;
+    img.className = "full";
+    img.src = buildExport().toDataURL("image/png");
+    area.append(img);
+  } else {
+    // 프랑스 자수·선 도안은 천에 그대로 따라 그리도록 실제 크기로
+    const hoop = +$("hoop").value, size = HOOP_DESIGN[hoop];
+    const chart = $("chartCanvas"), aspect = chart.width / chart.height;
+    const w = aspect >= 1 ? size : size * aspect, h = w / aspect;
+    meta.textContent = `${hoop}cm 수틀용 · 도안 ${w.toFixed(1)} × ${h.toFixed(1)}cm · 점선 원은 수틀 안쪽 크기 · 사도삼촌 작업실`;
+    const stage = document.createElement("div");
+    stage.className = "stage";
+    const side = Math.min(hoop, PRINT_WIDTH);
+    stage.style.width = stage.style.height = side + "cm";
+    if (hoop <= PRINT_WIDTH) {
+      const ring = document.createElement("span");
+      ring.className = "hoop-ring";
+      stage.append(ring);
+    }
+    img.style.width = w + "cm";
+    img.style.height = h + "cm";
+    img.src = chart.toDataURL("image/png");
+    stage.append(img);
+    // 인쇄 배율 확인용 5cm 자
+    const scale = document.createElement("div");
+    scale.className = "scale";
+    scale.innerHTML = `<i style="width:5cm"></i><span>이 자가 정확히 5cm인지 재 보세요. 다르면 인쇄 배율을 '실제 크기(100%)'로 바꿔 주세요.</span>`;
+    const list = document.createElement("ul");
+    res.pal.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = `${mode === "french" ? p.num + "번 · " : ""}DMC ${p.d.code} ${p.d.name} · ${countText(res, p)}`;
+      list.append(li);
+    });
+    area.append(stage, scale, list);
+  }
+  const go = () => window.print();
+  (img.decode ? img.decode() : Promise.resolve()).then(go, go);
 }
 
 function downloadFile(file) {
@@ -960,6 +1041,7 @@ function setMode(m) {
   document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
   document.querySelectorAll("[data-modes]").forEach(el => { el.hidden = !el.dataset.modes.split(" ").includes(m); });
   $("dots").hidden = m !== "line";
+  $("printBtn").textContent = m === "cross" ? "종이에 인쇄하기" : "실제 크기로 인쇄하기";
   render();
 }
 
@@ -1001,6 +1083,7 @@ document.querySelectorAll("#modes button").forEach(b => { b.onclick = () => setM
 [["colors", "colorsVal"], ["width", "widthVal"], ["detail", "detailVal"], ["thick", "thickVal"]].forEach(([id, out]) => {
   $(id).addEventListener("input", () => { $(out).textContent = $(id).value; rerender(); });
 });
-["skipWhite", "cleanup", "tint", "bgRemove", "lineColor"].forEach(id => $(id).addEventListener("change", rerender));
+["skipWhite", "cleanup", "tint", "bgRemove", "lineColor", "hoop"].forEach(id => $(id).addEventListener("change", rerender));
 $("downloadBtn").onclick = exportPNG;
+$("printBtn").onclick = printPattern;
 $("year").textContent = new Date().getFullYear();
