@@ -88,6 +88,8 @@ function setSource(drawable, w, h) {
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, src.width, src.height);
   ctx.drawImage(drawable, 0, 0, src.width, src.height);
+  srcId++;
+  resetTaps();
   $("sourceImg").src = src.toDataURL("image/jpeg", 0.85);
   $("sourceBox").hidden = false;
   $("settings").hidden = false;
@@ -319,8 +321,171 @@ function makeFrench(k) {
   return res;
 }
 
+// ===== AI 배경 지우기 (MediaPipe 매직 터치) =====
+// 모델 파일만 내려받고, 사진은 이 기기 안에서 처리합니다.
+const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+const MP_MODEL = "https://storage.googleapis.com/mediapipe-models/interactive_segmenter/magic_touch/float32/1/magic_touch.tflite";
+let segmenter = null, segLoading = null;
+let taps = [{ x: 0.5, y: 0.5 }];     // 주인공으로 고른 자리들 (0~1). 처음엔 가운데
+let autoTap = true;                  // 아직 사용자가 누르지 않음
+let mask = null;                     // { data: Uint8Array(src 크기), w, h } 1 = 주인공
+const maskCache = new Map();         // 누른 자리마다 오려낸 결과
+
+async function getSegmenter() {
+  if (segmenter) return segmenter;
+  if (!segLoading) {
+    segLoading = (async () => {
+      const vision = await import(`${MP}/vision_bundle.mjs`);
+      const files = await vision.FilesetResolver.forVisionTasks(`${MP}/wasm`);
+      return vision.InteractiveSegmenter.createFromOptions(files, {
+        baseOptions: { modelAssetPath: MP_MODEL, delegate: "CPU" },
+        outputConfidenceMasks: true,
+        outputCategoryMask: false
+      });
+    })();
+  }
+  try { segmenter = await segLoading; } catch (e) { segLoading = null; throw e; }
+  return segmenter;
+}
+
+// 누른 자리 하나에 대해 그 물체를 오려내기
+async function segmentAt(pt) {
+  const key = `${srcId}:${pt.x}:${pt.y}`;
+  if (maskCache.has(key)) return maskCache.get(key);
+  const seg = await getSegmenter();
+  const r = seg.segment(src, { keypoint: pt });
+  const w = src.width, h = src.height;
+  const kp = Math.min(h - 1, Math.floor(pt.y * h)) * w + Math.min(w - 1, Math.floor(pt.x * w));
+  // 누른 곳의 값이 가장 큰 마스크가 주인공
+  let best = null, bv = -1;
+  (r.confidenceMasks || []).forEach(m => {
+    const a = m.getAsFloat32Array();
+    if (a[kp] > bv) { bv = a[kp]; best = a.slice(); }
+  });
+  r.close();
+  if (!best) throw new Error("no mask");
+  const data = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) data[i] = best[i] > 0.5 ? 1 : 0;
+  // 누른 곳과 이어진 덩어리만 남기고, 안쪽 구멍은 메우기
+  const { comp, list } = components(data, w, h);
+  let keep = comp[kp];
+  if (data[kp] !== 1) {
+    let area = 0;
+    list.forEach((c, i) => { if (c.label === 1 && c.area > area) { area = c.area; keep = i; } });
+  }
+  const touches = new Set();
+  for (let x = 0; x < w; x++) { touches.add(comp[x]); touches.add(comp[(h - 1) * w + x]); }
+  for (let y = 0; y < h; y++) { touches.add(comp[y * w]); touches.add(comp[y * w + w - 1]); }
+  for (let i = 0; i < w * h; i++) {
+    const c = comp[i];
+    data[i] = c === keep || (list[c].label === 0 && !touches.has(c)) ? 1 : 0;
+  }
+  maskCache.set(key, data);
+  return data;
+}
+
+// 누른 자리들을 모두 합친 주인공
+async function computeMask() {
+  const w = src.width, h = src.height, data = new Uint8Array(w * h);
+  for (const pt of taps) {
+    const m = await segmentAt(pt);
+    for (let i = 0; i < w * h; i++) data[i] |= m[i];
+  }
+  return { data, w, h };
+}
+
+// ===== 선 도안 만들기 =====
+function makeLine() {
+  const d = +$("detail").value;
+  const W = Math.min(600, src.width);
+  const H = Math.max(1, Math.round(W * src.height / src.width));
+  const n = W * H;
+  const lab = pixels(W, H, 1.2);
+  const fg = new Uint8Array(n).fill(1);
+  if (mask) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    fg[y * W + x] = mask.data[Math.floor(y * mask.h / H) * mask.w + Math.floor(x * mask.w / W)];
+  }
+  // 주인공 부분의 색만 모아서 몇 가지 색으로 나누기
+  let nfg = 0;
+  for (let p = 0; p < n; p++) nfg += fg[p];
+  if (nfg < 50) { fg.fill(1); nfg = n; }
+  const fgLab = new Float32Array(nfg * 3);
+  for (let p = 0, j = 0; p < n; p++) if (fg[p]) { fgLab.set(lab.subarray(p * 3, p * 3 + 3), j * 3); j++; }
+  const k = [3, 4, 5, 6, 8][d - 1];
+  const pal = buildPalette(fgLab, nfg, k);
+  const labels = assign(lab, n, pal);
+  const bg = pal.length;                 // 배경은 마지막 번호
+  for (let p = 0; p < n; p++) if (!fg[p]) labels[p] = bg;
+  modeFilter(labels, W, H, bg + 1);
+  modeFilter(labels, W, H, bg + 1);
+  const minArea = [700, 360, 180, 90, 45][d - 1] * n / (480 * 480);
+  mergeSmall(labels, W, H, minArea);
+  mergeSmall(labels, W, H, minArea);
+
+  // 색이 바뀌는 곳 = 안쪽 선, 배경과 닿는 곳 = 바깥 윤곽선
+  const inner = new Uint8Array(n), outer = new Uint8Array(n);
+  let area = 0, nIn = 0, nOut = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const p = y * W + x, l = labels[p];
+    if (l !== bg) area++;
+    [x < W - 1 ? p + 1 : -1, y < H - 1 ? p + W : -1].forEach(q => {
+      if (q < 0 || labels[q] === l) return;
+      if (l === bg || labels[q] === bg) outer[l === bg ? q : p] = 1;
+      else inner[p] = 1;
+    });
+    // 사진 가장자리에 걸친 주인공도 테두리 긋기
+    if (l !== bg && mask && (x === 0 || y === 0 || x === W - 1 || y === H - 1)) outer[p] = 1;
+  }
+  inner.forEach(v => { nIn += v; });
+  outer.forEach((v, p) => { if (v) { inner[p] = 0; nOut++; } });
+  const line = DMC.find(t => t.code === $("lineColor").value);
+  return {
+    W, H, labels, bg, inner, outer, area, nIn, nOut,
+    pal: [{ d: line, count: nIn + nOut, sym: "〰", num: "〰" }]
+  };
+}
+
 // ===== 그리기 =====
 const textColor = d => d.lab[0] > 55 ? "#222" : "#fff";
+
+// 잘라낸 주인공 미리보기 (체크무늬 = 지워진 배경)
+function drawCutout(canvas, res) {
+  const { W, H, labels, bg } = res;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  for (let y = 0; y < H; y += 12) for (let x = 0; x < W; x += 12) {
+    ctx.fillStyle = (x + y) / 12 % 2 ? "#e9e4da" : "#f8f5ef";
+    ctx.fillRect(x, y, 12, 12);
+  }
+  const tmp = document.createElement("canvas");
+  tmp.width = W; tmp.height = H;
+  const t = tmp.getContext("2d");
+  t.drawImage(src, 0, 0, W, H);
+  const img = t.getImageData(0, 0, W, H);
+  for (let p = 0; p < W * H; p++) if (labels[p] === bg) img.data[p * 4 + 3] = 0;
+  t.putImageData(img, 0, 0);
+  ctx.drawImage(tmp, 0, 0);
+}
+
+// 선 픽셀마다 작은 원을 찍어 매끈한 선으로 (바깥 윤곽선은 조금 더 굵게)
+function drawLine(canvas, res, thick) {
+  const S = 3, { W, H } = res;
+  canvas.width = W * S; canvas.height = H * S;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = res.pal[0].d.hex;
+  const r = 0.6 + thick * 0.55;
+  [[res.inner, r], [res.outer, r + 1]].forEach(([edges, rad]) => {
+    ctx.beginPath();
+    edges.forEach((v, p) => {
+      if (!v) return;
+      const x = (p % W) * S + S / 2, y = Math.floor(p / W) * S + S / 2;
+      ctx.moveTo(x + rad, y);
+      ctx.arc(x, y, rad, 0, Math.PI * 2);
+    });
+    ctx.fill();
+  });
+}
 
 function drawPreview(canvas, res) {
   const c = 8, { W, H } = res;
@@ -415,8 +580,11 @@ function drawFrench(canvas, res, tint) {
 }
 
 // ===== 실 목록 =====
+const lineCm = res => Math.round((res.nIn + res.nOut) * 12 / res.W);   // 가로 12cm로 수놓을 때
+
 function countText(res, p) {
   if (mode === "cross") return `${p.count.toLocaleString()}땀`;
+  if (mode === "line") return `선 전체 · 길이 약 ${lineCm(res)}cm`;
   return `넓이 ${Math.max(1, Math.round(p.count * 100 / (res.W * res.H)))}%`;
 }
 
@@ -510,12 +678,41 @@ const TECH = {
     steps: ["한 땀을 놓고, 그 땀의 절반쯤 되는 곳 옆에서 바늘을 올려요.", "실은 항상 같은 쪽(아래쪽)에 두고 나아가요.", "꼬인 밧줄처럼 매끈한 선이 만들어져요."],
     svg: `<path ${S} d='M6 30l18-8M16 28l18-9M26 25l18-9M36 22l18-7M46 19l18-6M56 17l20-5'/>`
   },
+  running: {
+    name: "홈질 (러닝 스티치)", level: 1, use: "안쪽의 가는 선, 무늬 선",
+    steps: ["바늘을 올렸다 내렸다 하며 같은 간격으로 땀을 놓아요.", "땀 길이와 빈칸 길이를 비슷하게 맞추면 정돈돼 보여요.", "실 1가닥으로 놓으면 바깥 윤곽보다 가볍고 은은해요."],
+    svg: `<path ${S} d='M6 22h12M26 22h12M46 22h12M66 22h14'/>`
+  },
   chain: {
     name: "체인 스티치", level: 2, use: "굵고 또렷한 테두리",
     steps: ["바늘을 올린 자리에 다시 꽂고, 고리를 남긴 채 한 땀 앞에서 올려요.", "바늘을 고리 안으로 통과시켜 살짝 당겨요.", "이걸 반복하면 사슬 모양 선이 돼요."],
     svg: `<g ${S} stroke-width='2.6'><ellipse cx='16' cy='22' rx='9' ry='6'/><ellipse cx='34' cy='22' rx='9' ry='6'/><ellipse cx='52' cy='22' rx='9' ry='6'/><ellipse cx='70' cy='22' rx='9' ry='6'/></g>`
   }
 };
+
+// 선 도안용 특징
+function lineFeatures(res) {
+  const total = res.nIn + res.nOut;
+  return {
+    outlineShare: total ? res.nOut / total : 1,           // 선 중 바깥 윤곽이 차지하는 비율
+    density: res.area ? total / res.area : 0,             // 주인공 넓이에 비해 선이 얼마나 빽빽한지
+    strands: +$("thick").value <= 2 ? 1 : +$("thick").value === 3 ? 2 : 3
+  };
+}
+
+function recommendLine(res) {
+  const f = lineFeatures(res), pct = v => Math.round(v * 100);
+  const thread = `DMC ${res.pal[0].d.code} 실 ${f.strands}가닥`;
+  const c = [
+    { key: "back", score: 50 + f.density * 700, why: f.density > 0.06
+      ? `짧게 꺾이는 선이 많은 그림이에요. 백스티치는 어떤 모양이든 정확하게 따라갈 수 있어서 처음 하는 분께 가장 쉬워요. ${thread}로 놓아 보세요.`
+      : `선 도안의 기본이에요. 모든 선을 백스티치 하나로 놓아도 깔끔하게 완성돼요. ${thread}로 시작해 보세요.` },
+    { key: "stem", score: 40 + f.outlineShare * 60, why: `바깥 윤곽선이 전체 선의 ${pct(f.outlineShare)}%예요. 길게 이어지는 테두리를 스템 스티치로 놓으면 꼬인 밧줄처럼 매끈한 곡선이 돼요.` },
+    { key: "chain", score: f.density < 0.04 ? 65 : 20, why: `선이 많지 않은 단순한 그림이에요. 테두리를 체인 스티치로 굵게 둘러 주면 일러스트처럼 또렷해 보여요.` },
+    { key: "running", score: 30 + (1 - f.outlineShare) * 50, why: `안쪽 선이 ${pct(1 - f.outlineShare)}%를 차지해요. 바깥은 진하게, 안쪽 선은 홈질 1가닥으로 가볍게 놓으면 입체감이 생겨요.` }
+  ];
+  return c.sort((a, b) => b.score - a.score).slice(0, 3);
+}
 
 // ===== 규칙으로 기법 고르기 =====
 function recommend(f) {
@@ -568,6 +765,21 @@ function renderRecs(list) {
 }
 
 // ===== 요약 =====
+function renderLineSummary(res) {
+  const f = lineFeatures(res), cm = lineCm(res);
+  const skeins = Math.max(1, Math.ceil(cm * 2 * f.strands / 6 / 800));   // 6가닥 8m 한 타래 기준, 실은 선 길이의 약 2배
+  const level = f.density < 0.05 ? "쉬움 🌱" : f.density < 0.09 ? "보통 🌿" : "도전 🌳";
+  const chips = [
+    mask ? "✂️ 배경 지움" : "🖼️ 배경 그대로",
+    `〰 가로 12cm로 놓으면 선 길이 약 ${cm}cm`,
+    `🧵 ${res.pal[0].d.name} ${f.strands}가닥 · ${skeins}타래면 충분`,
+    `난이도 ${level}`
+  ];
+  $("summary").innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join("");
+  $("previewCaption").textContent = mask ? "배경을 지운 모습 (체크무늬가 지워진 곳)" : "배경을 지우지 않았어요";
+  $("chartCaption").textContent = "선 도안 — 인쇄해서 창문에 대고 물에 지워지는 펜으로 천에 따라 그려요. 굵은 선이 바깥 윤곽이에요";
+}
+
 function renderSummary(res, f) {
   const chips = [`🎨 실 ${f.nColors}색`];
   let level;
@@ -586,6 +798,7 @@ function renderSummary(res, f) {
   }
   chips.push(`난이도 ${level}`);
   $("summary").innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join("");
+  $("previewCaption").textContent = "수놓으면 이런 느낌이에요";
   $("chartCaption").textContent = mode === "cross"
     ? "도안 (굵은 선은 10칸마다, 빨간 삼각형은 가운데)"
     : "밑그림 (숫자는 아래 실 번호) — 인쇄해서 창문에 대고 물에 지워지는 펜으로 천에 따라 그려요";
@@ -604,9 +817,11 @@ function exportPNG() {
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, out.width, out.height);
   ctx.fillStyle = "#3b3127"; ctx.textBaseline = "middle";
   ctx.font = "bold 20px sans-serif";
-  ctx.fillText(mode === "cross" ? "십자수 도안" : "프랑스 자수 밑그림", pad, 26);
+  const title = { cross: "십자수 도안", french: "프랑스 자수 밑그림", line: "선 도안" };
+  const sub = { cross: `${res.W} × ${res.H}칸 · 실 ${res.pal.length}색 · 실과 흙`, french: `실 ${res.pal.length}색 · 실과 흙`, line: "굵은 선은 바깥 윤곽 · 실과 흙" };
+  ctx.fillText(title[mode], pad, 26);
   ctx.font = "13px sans-serif"; ctx.fillStyle = "#7a6c5d";
-  ctx.fillText(mode === "cross" ? `${res.W} × ${res.H}칸 · 실 ${res.pal.length}색 · 실과 흙` : `실 ${res.pal.length}색 · 실과 흙`, pad, 48);
+  ctx.fillText(sub[mode], pad, 48);
   ctx.drawImage(chart, pad, head);
   let y = head + chart.height + 28;
   ctx.fillStyle = "#3b3127"; ctx.font = "bold 15px sans-serif";
@@ -624,15 +839,61 @@ function exportPNG() {
   out.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = mode === "cross" ? "십자수도안.png" : "프랑스자수밑그림.png";
+    a.download = { cross: "십자수도안.png", french: "프랑스자수밑그림.png", line: "선도안.png" }[mode];
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
 }
 
 // ===== 화면 갱신 =====
-function render() {
+let renderId = 0, srcId = 0, maskKey = "";
+
+function setStatus(text) {
+  $("status").textContent = text;
+  $("status").hidden = !text;
+}
+
+async function renderLine(id) {
+  const want = $("bgRemove").checked ? `${srcId}:${JSON.stringify(taps)}` : "";
+  if (want !== maskKey || !want) {
+    mask = null;
+    maskKey = "";
+    setStatus("");
+    if (want) {
+      setStatus(segmenter ? "✂️ 배경을 지우는 중이에요…" : "✂️ AI를 준비하는 중이에요… (처음 한 번만 약 6MB를 받아요)");
+      await new Promise(r => setTimeout(r, 30));   // 안내 문구가 먼저 보이도록
+      try {
+        const m = await computeMask();
+        if (id !== renderId) return false;
+        mask = m; maskKey = want;
+        setStatus("");
+      } catch (e) {
+        if (id !== renderId) return false;
+        console.warn(e);
+        setStatus("AI 배경 지우기를 불러오지 못했어요. 인터넷 연결을 확인해 주세요. 우선 배경을 그대로 두고 선 도안을 만들었어요.");
+      }
+    }
+  }
+  const res = makeLine();
+  lastRes = res;
+  drawCutout($("previewCanvas"), res);
+  drawLine($("chartCanvas"), res, +$("thick").value);
+  renderLegend(res);
+  renderLineSummary(res);
+  renderRecs(recommendLine(res));
+  return true;
+}
+
+async function render() {
   if (!src) return;
+  const id = ++renderId;
+  if (mode === "line") {
+    if (!(await renderLine(id))) return;
+    $("result").hidden = false;
+    $("recommend").hidden = false;
+    return;
+  }
+  setStatus("");
   const k = +$("colors").value;
   const res = mode === "cross" ? makeCross(k) : makeFrench(k);
   lastRes = res;
@@ -659,19 +920,49 @@ function rerender() {
 function setMode(m) {
   mode = m;
   document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
-  document.querySelectorAll(".only-cross").forEach(el => { el.hidden = m !== "cross"; });
-  document.querySelectorAll(".only-french").forEach(el => { el.hidden = m !== "french"; });
+  document.querySelectorAll("[data-modes]").forEach(el => { el.hidden = !el.dataset.modes.split(" ").includes(m); });
+  $("dots").hidden = m !== "line";
   render();
 }
+
+// 사진을 누르면 그 자리를 주인공으로
+function drawDots() {
+  $("dots").innerHTML = "";
+  taps.forEach(t => {
+    const d = document.createElement("span");
+    d.className = "dot";
+    d.style.left = t.x * 100 + "%";
+    d.style.top = t.y * 100 + "%";
+    $("dots").appendChild(d);
+  });
+}
+function resetTaps() {
+  taps = [{ x: 0.5, y: 0.5 }];
+  autoTap = true;
+  drawDots();
+}
+$("sourceImg").addEventListener("click", e => {
+  const r = e.target.getBoundingClientRect();
+  const pt = {
+    x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+    y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))
+  };
+  // 첫 번째로 누르면 가운데 자동 선택을 바꾸고, 그다음부터는 더하기
+  taps = autoTap ? [pt] : [...taps, pt];
+  autoTap = false;
+  drawDots();
+  if (mode === "line") render();
+});
 
 // ===== 시작 =====
 $("camInput").addEventListener("change", e => { loadFile(e.target.files[0]); e.target.value = ""; });
 $("fileInput").addEventListener("change", e => { loadFile(e.target.files[0]); e.target.value = ""; });
 $("sampleBtn").onclick = sampleImage;
+$("resetTaps").onclick = () => { resetTaps(); if (mode === "line") render(); };
 document.querySelectorAll("#modes button").forEach(b => { b.onclick = () => setMode(b.dataset.mode); });
-[["colors", "colorsVal"], ["width", "widthVal"], ["detail", "detailVal"]].forEach(([id, out]) => {
+[["colors", "colorsVal"], ["width", "widthVal"], ["detail", "detailVal"], ["thick", "thickVal"]].forEach(([id, out]) => {
   $(id).addEventListener("input", () => { $(out).textContent = $(id).value; rerender(); });
 });
-["skipWhite", "cleanup", "tint"].forEach(id => $(id).addEventListener("change", rerender));
+["skipWhite", "cleanup", "tint", "bgRemove", "lineColor"].forEach(id => $(id).addEventListener("change", rerender));
 $("downloadBtn").onclick = exportPNG;
 $("year").textContent = new Date().getFullYear();

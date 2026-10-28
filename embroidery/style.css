@@ -211,9 +211,19 @@ nav a.here { color: var(--thread); font-weight: 700; }
 .btn.main { background: var(--thread); border-color: var(--thread); color: #fff; }
 .step #downloadBtn { margin-top: 18px; }
 .source { margin-top: 14px; }
-.source img { max-width: 220px; max-height: 220px; border-radius: 10px; border: 1px solid var(--line); }
+.source img { display: block; max-width: 220px; max-height: 220px; border-radius: 10px; border: 1px solid var(--line); cursor: crosshair; }
+.tap { position: relative; display: inline-block; }
+.btn.small { padding: 6px 14px; font-size: 0.85rem; margin-top: 8px; }
+.tap .dot {
+  position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+  background: var(--thread); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); pointer-events: none;
+}
+.status {
+  margin-top: 14px; padding: 10px 14px; border-radius: 10px;
+  background: #fff8e1; border: 1px solid #f0e2b6; font-size: 0.92rem;
+}
 
-.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
 .modes button {
   text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 12px;
   padding: 12px 14px; cursor: pointer; font: inherit; color: var(--ink);
@@ -226,13 +236,14 @@ nav a.here { color: var(--thread); font-weight: 700; }
 .controls label b { color: var(--thread); }
 .controls label small { color: var(--muted); font-size: 0.8rem; }
 .controls input[type=range] { width: 100%; accent-color: var(--thread); }
+.controls select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
 .controls label.check { flex-direction: row; align-items: center; gap: 8px; }
 .controls label.check input { accent-color: var(--thread); width: 18px; height: 18px; }
 
 .summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .chip { background: #f3ece0; border-radius: 999px; padding: 4px 12px; font-size: 0.88rem; }
 .views { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; align-items: start; }
-.views:has(> figure.only-cross[hidden]) { grid-template-columns: 1fr; }
+.views:has(> figure[hidden]) { grid-template-columns: 1fr; }
 .views figure { margin: 0; min-width: 0; }
 .views canvas { display: block; max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); }
 .views .scroll { overflow: auto; border-radius: 8px; }
