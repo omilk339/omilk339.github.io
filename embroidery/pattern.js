@@ -101,7 +101,7 @@ function loadFile(file) {
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => { setSource(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); };
-  img.onerror = () => { alert("이 사진은 열 수 없어요. 다른 사진으로 해 주세요."); URL.revokeObjectURL(url); };
+  img.onerror = () => { alert(t("badImage")); URL.revokeObjectURL(url); };
   img.src = url;
 }
 
@@ -599,10 +599,15 @@ const lineCm = res => {
   return Math.round((res.nIn + res.nOut) * designCm() / longSide);
 };
 
+// DMC 색 이름은 한국어로만 있어서, 다른 언어에서는 번호만 보여요
+const dmcName = d => lang === "ko" ? d.name : "";
+const lineColorName = d => t("col" + d.code) || dmcName(d);
+const num = n => n.toLocaleString(lang);
+
 function countText(res, p) {
-  if (mode === "cross") return `${p.count.toLocaleString()}땀`;
-  if (mode === "line") return `선 전체 · 길이 약 ${lineCm(res)}cm`;
-  return `넓이 ${Math.max(1, Math.round(p.count * 100 / (res.W * res.H)))}%`;
+  if (mode === "cross") return t("cntStitches", { n: num(p.count) });
+  if (mode === "line") return t("cntLine", { n: lineCm(res) });
+  return t("cntArea", { n: Math.max(1, Math.round(p.count * 100 / (res.W * res.H))) });
 }
 
 function renderLegend(res) {
@@ -617,7 +622,7 @@ function renderLegend(res) {
     sw.style.color = textColor(p.d);
     sw.textContent = mode === "cross" ? p.sym : p.num;
     row.querySelector("b").textContent = `DMC ${p.d.code}`;
-    row.querySelector(".nm").textContent = p.d.name;
+    row.querySelector(".nm").textContent = mode === "line" ? lineColorName(p.d) : dmcName(p.d);
     row.querySelector("small").textContent = countText(res, p);
     box.appendChild(row);
   });
@@ -661,48 +666,39 @@ function analyze(k, res) {
 const S = "stroke='currentColor' stroke-width='3' stroke-linecap='round' fill='none'";
 const TECH = {
   cross: {
-    name: "풀 크로스 스티치", level: 1, use: "도안의 모든 색칸",
-    steps: ["칸의 왼쪽 아래에서 바늘을 올려 오른쪽 위로 내려요 ( / 모양).", "한 줄의 / 를 먼저 쭉 놓고, 돌아오면서 \\ 를 덮어 X를 만들어요.", "위에 덮는 땀의 방향을 항상 같게 하면 결이 고르게 보여요."],
+    level: 1,
     svg: `<path ${S} d='M8 12l20 20M28 12L8 32M34 12l20 20M54 12L34 32M60 12l20 20M80 12L60 32'/>`
   },
   half: {
-    name: "하프 스티치", level: 1, use: "배경, 은은한 그림자",
-    steps: ["X의 한쪽( / )만 놓아요.", "실을 1가닥만 쓰면 더 흐릿하고 부드러워져요.", "옆의 풀 스티치보다 연해 보여서 멀리 있는 느낌이 나요."],
+    level: 1,
     svg: `<path ${S} d='M8 32L28 12M34 32L54 12M60 32L80 12'/>`
   },
   back: {
-    name: "백스티치", level: 1, use: "윤곽선, 글씨, 가는 줄기",
-    steps: ["한 땀 앞에서 바늘을 올리고, 뒤로 돌아가 앞 땀 끝에 꽂아요.", "땀 길이를 일정하게 맞춰요 (십자수라면 한 칸).", "어두운 색 1~2가닥으로 놓으면 그림이 또렷해져요."],
+    level: 1,
     svg: `<path ${S} d='M6 30l16-10M24 19l18-4M44 15l18 4M64 20l16 10'/>`
   },
   knot: {
-    name: "프렌치 노트", level: 2, use: "꽃술, 눈, 작은 점",
-    steps: ["바늘을 올린 뒤 실을 바늘에 2번 감아요.", "감은 실을 손가락으로 살짝 잡고, 나온 자리 바로 옆에 바늘을 꽂아요.", "천천히 당기면 동그란 매듭 점이 생겨요."],
+    level: 2,
     svg: `<g fill='currentColor'><circle cx='20' cy='22' r='6'/><circle cx='44' cy='16' r='6'/><circle cx='66' cy='26' r='6'/></g>`
   },
   satin: {
-    name: "새틴 스티치", level: 2, use: "꽃잎, 잎사귀 같은 작은 면",
-    steps: ["면의 가운데에서 시작해 한쪽 끝까지 나란히 땀을 채워요.", "땀 사이에 틈이 없도록 바짝 붙여 놓아요.", "1.5cm보다 넓은 면은 실이 들뜨기 쉬우니 롱앤숏을 써요."],
+    level: 2,
     svg: `<path ${S} stroke-width='2.4' d='M24 30l8-18M30 32l9-21M36 33l9-22M42 33l9-22M48 33l9-21M54 32l8-18'/>`
   },
   longshort: {
-    name: "롱앤숏 스티치", level: 3, use: "넓은 면, 색이 서서히 바뀌는 곳",
-    steps: ["첫 줄은 긴 땀과 짧은 땀을 번갈아 놓아요.", "다음 줄은 다음 색 실로, 앞 줄 땀 사이를 파고들며 놓아요.", "색을 한 단계씩 바꾸면 자연스러운 그러데이션이 생겨요."],
+    level: 3,
     svg: `<path ${S} stroke-width='2.4' d='M14 6v16M22 6v10M30 6v16M38 6v10M46 6v16M54 6v10M62 6v16M70 6v10'/><path ${S} stroke-width='2.4' opacity='.55' d='M14 20v16M22 14v20M30 20v16M38 14v20M46 20v16M54 14v20M62 20v16M70 14v20'/>`
   },
   stem: {
-    name: "스템 스티치", level: 1, use: "부드러운 곡선, 줄기",
-    steps: ["한 땀을 놓고, 그 땀의 절반쯤 되는 곳 옆에서 바늘을 올려요.", "실은 항상 같은 쪽(아래쪽)에 두고 나아가요.", "꼬인 밧줄처럼 매끈한 선이 만들어져요."],
+    level: 1,
     svg: `<path ${S} d='M6 30l18-8M16 28l18-9M26 25l18-9M36 22l18-7M46 19l18-6M56 17l20-5'/>`
   },
   running: {
-    name: "홈질 (러닝 스티치)", level: 1, use: "안쪽의 가는 선, 무늬 선",
-    steps: ["바늘을 올렸다 내렸다 하며 같은 간격으로 땀을 놓아요.", "땀 길이와 빈칸 길이를 비슷하게 맞추면 정돈돼 보여요.", "실 1가닥으로 놓으면 바깥 윤곽보다 가볍고 은은해요."],
+    level: 1,
     svg: `<path ${S} d='M6 22h12M26 22h12M46 22h12M66 22h14'/>`
   },
   chain: {
-    name: "체인 스티치", level: 2, use: "굵고 또렷한 테두리",
-    steps: ["바늘을 올린 자리에 다시 꽂고, 고리를 남긴 채 한 땀 앞에서 올려요.", "바늘을 고리 안으로 통과시켜 살짝 당겨요.", "이걸 반복하면 사슬 모양 선이 돼요."],
+    level: 2,
     svg: `<g ${S} stroke-width='2.6'><ellipse cx='16' cy='22' rx='9' ry='6'/><ellipse cx='34' cy='22' rx='9' ry='6'/><ellipse cx='52' cy='22' rx='9' ry='6'/><ellipse cx='70' cy='22' rx='9' ry='6'/></g>`
   }
 };
@@ -719,14 +715,12 @@ function lineFeatures(res) {
 
 function recommendLine(res) {
   const f = lineFeatures(res), pct = v => Math.round(v * 100);
-  const thread = `DMC ${res.pal[0].d.code} 실 ${f.strands}가닥`;
+  const thread = t("threadStrands", { code: res.pal[0].d.code, s: f.strands });
   const c = [
-    { key: "back", score: 50 + f.density * 700, why: f.density > 0.06
-      ? `짧게 꺾이는 선이 많은 그림이에요. 백스티치는 어떤 모양이든 정확하게 따라갈 수 있어서 처음 하는 분께 가장 쉬워요. ${thread}로 놓아 보세요.`
-      : `선 도안의 기본이에요. 모든 선을 백스티치 하나로 놓아도 깔끔하게 완성돼요. ${thread}로 시작해 보세요.` },
-    { key: "stem", score: 40 + f.outlineShare * 60, why: `바깥 윤곽선이 전체 선의 ${pct(f.outlineShare)}%예요. 길게 이어지는 테두리를 스템 스티치로 놓으면 꼬인 밧줄처럼 매끈한 곡선이 돼요.` },
-    { key: "chain", score: f.density < 0.04 ? 65 : 20, why: `선이 많지 않은 단순한 그림이에요. 테두리를 체인 스티치로 굵게 둘러 주면 일러스트처럼 또렷해 보여요.` },
-    { key: "running", score: 30 + (1 - f.outlineShare) * 50, why: `안쪽 선이 ${pct(1 - f.outlineShare)}%를 차지해요. 바깥은 진하게, 안쪽 선은 홈질 1가닥으로 가볍게 놓으면 입체감이 생겨요.` }
+    { key: "back", score: 50 + f.density * 700, why: t(f.density > 0.06 ? "wBackLineMany" : "wBackLineFew", { thread }) },
+    { key: "stem", score: 40 + f.outlineShare * 60, why: t("wStemLine", { p: pct(f.outlineShare) }) },
+    { key: "chain", score: f.density < 0.04 ? 65 : 20, why: t("wChainLine") },
+    { key: "running", score: 30 + (1 - f.outlineShare) * 50, why: t("wRunningLine", { p: pct(1 - f.outlineShare) }) }
   ];
   return c.sort((a, b) => b.score - a.score).slice(0, 3);
 }
@@ -734,26 +728,21 @@ function recommendLine(res) {
 // ===== 규칙으로 기법 고르기 =====
 function recommend(f) {
   const pct = v => Math.round(v * 100);
-  const dark = `DMC ${f.darkest.d.code} (${f.darkest.d.name})`;
+  const name = dmcName(f.darkest.d);
+  const dark = `DMC ${f.darkest.d.code}${name ? ` (${name})` : ""}`;
   const c = [];
   if (mode === "cross") {
-    c.push({ key: "cross", score: 999, why: `이 도안은 ${f.nColors}가지 색으로 되어 있어요. 기호가 있는 칸은 모두 기본 X땀으로 채우면 돼요. 처음이라면 실 2가닥으로 시작하세요.` });
-    c.push({ key: "back", score: 20 + f.edgeRatio * 220, why: f.edgeRatio > 0.25
-      ? `색이 바뀌는 경계가 많은 그림이에요 (경계 ${pct(f.edgeRatio)}%). 다 놓은 뒤 ${dark} 실로 테두리를 둘러주면 모양이 훨씬 또렷해져요.`
-      : `경계가 적은 단순한 그림이에요. 눈, 줄기처럼 꼭 필요한 선에만 ${dark} 실로 살짝 넣어도 충분해요.` });
-    c.push({ key: "half", score: f.gradient * 160 + (f.nColors >= 10 ? 15 : 0), why: f.gradient > 0.3
-      ? `비슷한 색이 이어지는 부분이 많아요 (${pct(f.gradient)}%). 연한 배경이나 그림자를 하프 스티치로 놓으면 부드럽고 시간도 절반으로 줄어요.`
-      : `연한 배경을 채우고 싶다면 하프 스티치로 놓아 보세요. 주인공은 또렷하게, 배경은 은은하게 보여요.` });
-    c.push({ key: "knot", score: f.dotsPer1000 * 6, why: `사진 속에 작은 점이 ${f.dotsPer1000 > 5 ? "꽤 많아요" : "조금 있어요"}. 한 칸짜리 점(꽃술, 눈동자)은 X땀 대신 프렌치 노트로 놓으면 입체감이 살아나요.` });
+    c.push({ key: "cross", score: 999, why: t("wCross", { n: f.nColors }) });
+    c.push({ key: "back", score: 20 + f.edgeRatio * 220, why: f.edgeRatio > 0.25 ? t("wBackMany", { p: pct(f.edgeRatio), dark }) : t("wBackFew", { dark }) });
+    c.push({ key: "half", score: f.gradient * 160 + (f.nColors >= 10 ? 15 : 0), why: f.gradient > 0.3 ? t("wHalfMany", { p: pct(f.gradient) }) : t("wHalfFew") });
+    c.push({ key: "knot", score: f.dotsPer1000 * 6, why: t(f.dotsPer1000 > 5 ? "wKnotMany" : "wKnotSome") });
   } else {
-    c.push({ key: "satin", score: 40 + (1 - f.bigShare) * 50, why: f.bigShare < 0.5
-      ? `작은 면이 여러 개로 나뉜 그림이에요. 꽃잎이나 잎처럼 작은 칸은 새틴 스티치로 매끈하게 채우면 예뻐요.`
-      : `넓은 면 사이의 작은 칸(꽃잎, 열매 반짝임 등)을 새틴 스티치로 채워 보세요.` });
-    c.push({ key: "longshort", score: f.bigShare * 70 + f.gradient * 110, why: `넓은 면이 그림의 ${pct(f.bigShare)}%를 차지해요${f.gradient > 0.3 ? ", 비슷한 색이 서서히 바뀌는 곳도 많고요" : ""}. 넓은 곳은 새틴보다 롱앤숏으로 채워야 실이 들뜨지 않아요.` });
-    c.push({ key: "stem", score: 35 + (f.edgeRatio < 0.25 ? 30 : 0), why: `윤곽선이 ${f.edgeRatio < 0.25 ? "길고 단순해서" : "많지만"} 스템 스티치가 잘 어울려요. 줄기나 둥근 테두리를 매끈한 곡선으로 따라가기 좋아요.` });
-    c.push({ key: "back", score: 30 + f.edgeRatio * 150, why: `자잘한 윤곽이 ${f.edgeRatio > 0.25 ? "많은" : "있는"} 그림이에요 (경계 ${pct(f.edgeRatio)}%). 짧게 꺾이는 선은 백스티치가 가장 쉽고 정확해요. 추천 실: ${dark}.` });
-    c.push({ key: "chain", score: f.nColors <= 5 ? 55 : 20, why: `색이 ${f.nColors}가지로 단순한 편이에요. 체인 스티치로 굵게 테두리만 둘러도 일러스트처럼 멋진 작품이 돼요.` });
-    c.push({ key: "knot", score: f.dotsPer1000 * 6, why: `작은 점들이 보여요. 꽃술, 눈, 열매 씨앗은 프렌치 노트로 콕콕 찍어 주세요.` });
+    c.push({ key: "satin", score: 40 + (1 - f.bigShare) * 50, why: t(f.bigShare < 0.5 ? "wSatinMany" : "wSatinFew") });
+    c.push({ key: "longshort", score: f.bigShare * 70 + f.gradient * 110, why: t(f.gradient > 0.3 ? "wLongshortGrad" : "wLongshort", { p: pct(f.bigShare) }) });
+    c.push({ key: "stem", score: 35 + (f.edgeRatio < 0.25 ? 30 : 0), why: t(f.edgeRatio < 0.25 ? "wStemSimple" : "wStemMany") });
+    c.push({ key: "back", score: 30 + f.edgeRatio * 150, why: t(f.edgeRatio > 0.25 ? "wBackFrMany" : "wBackFrSome", { p: pct(f.edgeRatio), dark }) });
+    c.push({ key: "chain", score: f.nColors <= 5 ? 55 : 20, why: t("wChainFr", { n: f.nColors }) });
+    c.push({ key: "knot", score: f.dotsPer1000 * 6, why: t("wKnotFr") });
   }
   return c.sort((a, b) => b.score - a.score).slice(0, 3);
 }
@@ -762,20 +751,20 @@ function renderRecs(list) {
   const box = $("recs");
   box.innerHTML = "";
   list.forEach((r, i) => {
-    const t = TECH[r.key];
+    const tech = { ...TECH[r.key], ...t("tech_" + r.key) };
     const el = document.createElement("article");
     el.className = "rec";
     el.innerHTML = `
       <div class="rec-head">
-        <svg viewBox="0 0 88 44" aria-hidden="true">${t.svg}</svg>
+        <svg viewBox="0 0 88 44" aria-hidden="true">${tech.svg}</svg>
         <div>
-          <span class="rank">${i === 0 ? "가장 추천" : "함께 쓰면 좋아요"}</span>
-          <h4>${t.name}</h4>
-          <span class="level">난이도 ${"●".repeat(t.level)}${"○".repeat(3 - t.level)} · ${t.use}</span>
+          <span class="rank">${i === 0 ? t("rankTop") : t("rankMore")}</span>
+          <h4>${tech.name}</h4>
+          <span class="level">${t("levelWord")} ${"●".repeat(tech.level)}${"○".repeat(3 - tech.level)} · ${tech.use}</span>
         </div>
       </div>
       <p class="why"></p>
-      <ol>${t.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
+      <ol>${tech.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
     el.querySelector(".why").textContent = r.why;
     box.appendChild(el);
   });
@@ -785,44 +774,43 @@ function renderRecs(list) {
 function renderLineSummary(res) {
   const f = lineFeatures(res), cm = lineCm(res);
   const skeins = Math.max(1, Math.ceil(cm * 2 * f.strands / 6 / 800));   // 6가닥 8m 한 타래 기준, 실은 선 길이의 약 2배
-  const level = f.density < 0.05 ? "쉬움 🌱" : f.density < 0.09 ? "보통 🌿" : "도전 🌳";
+  const level = t(f.density < 0.05 ? "lvEasy" : f.density < 0.09 ? "lvMid" : "lvHard");
   const chips = [
-    mask ? "✂️ 배경 지움" : "🖼️ 배경 그대로",
-    `〰 ${$("hoop").value}cm 수틀(도안 ${designCm()}cm)로 놓으면 선 길이 약 ${cm}cm`,
-    `🧵 ${res.pal[0].d.name} ${f.strands}가닥 · ${skeins}타래면 충분`,
-    `난이도 ${level}`
+    t(mask ? "chipBgCut" : "chipBgKept"),
+    t("chipLineLen", { h: $("hoop").value, d: designCm(), n: cm }),
+    t("chipLineThread", { name: lineColorName(res.pal[0].d), s: f.strands, k: skeins }),
+    t("chipLevel", { l: level })
   ];
   $("summary").innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join("");
-  $("previewCaption").textContent = mask ? "배경을 지운 모습 (체크무늬가 지워진 곳)" : "배경을 지우지 않았어요";
-  $("chartCaption").textContent = "선 도안 — 인쇄해서 창문에 대고 물에 지워지는 펜으로 천에 따라 그려요. 굵은 선이 바깥 윤곽이에요";
+  $("previewCaption").textContent = t(mask ? "capCut" : "capNoCut");
+  $("chartCaption").textContent = t("capLine");
 }
 
 function renderSummary(res, f) {
-  const chips = [`🎨 실 ${f.nColors}색`];
+  const chips = [t("chipColors", { n: f.nColors })];
+  const lv = score => t(score <= 9 ? "lvEasy" : score <= 16 ? "lvMid" : "lvHard");
   let level;
   if (mode === "cross") {
     const stitches = res.pal.reduce((s, p) => s + p.count, 0);
     const cm = v => (v / 14 * 2.54).toFixed(1);
     const hours = Math.max(1, Math.round(stitches / 120));
     const score = f.nColors + stitches / 800;
-    level = score <= 9 ? "쉬움 🌱" : score <= 16 ? "보통 🌿" : "도전 🌳";
-    chips.push(`✖ ${stitches.toLocaleString()}땀`, `📏 14칸 아이다 천 기준 약 ${cm(res.W)} × ${cm(res.H)}cm`, `⏱ 처음이라면 약 ${hours}시간`);
+    level = lv(score);
+    chips.push(t("chipStitches", { n: num(stitches) }), t("chipSize", { w: cm(res.W), h: cm(res.H) }), t("chipTime", { n: hours }));
   } else {
     const regions = res.comps.list.length;
     const score = f.nColors + regions / 15;
-    level = score <= 9 ? "쉬움 🌱" : score <= 16 ? "보통 🌿" : "도전 🌳";
-    chips.push(`🧩 나뉜 칸 ${regions}개`, `🧵 실 2~3가닥, 15cm 수틀 추천`);
+    level = lv(score);
+    chips.push(t("chipRegions", { n: regions }), t("chipFrThread"));
   }
-  chips.push(`난이도 ${level}`);
+  chips.push(t("chipLevel", { l: level }));
   $("summary").innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join("");
-  $("previewCaption").textContent = "수놓으면 이런 느낌이에요";
-  $("chartCaption").textContent = mode === "cross"
-    ? "도안 (굵은 선은 10칸마다, 빨간 삼각형은 가운데)"
-    : "밑그림 (숫자는 아래 실 번호) — 인쇄해서 창문에 대고 물에 지워지는 펜으로 천에 따라 그려요";
+  $("previewCaption").textContent = t("capPreview");
+  $("chartCaption").textContent = t(mode === "cross" ? "capCross" : "capFrench");
 }
 
 // ===== 저장하기 =====
-const TITLE = { cross: "십자수 도안", french: "프랑스 자수 밑그림", line: "선 도안" };
+const title = () => t({ cross: "titleCross", french: "titleFrench", line: "titleLine" }[mode]);
 
 // 도안 + 실 목록을 한 장의 이미지로
 function buildExport() {
@@ -837,14 +825,14 @@ function buildExport() {
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, out.width, out.height);
   ctx.fillStyle = "#24262b"; ctx.textBaseline = "middle";
   ctx.font = "bold 20px sans-serif";
-  const sub = { cross: `${res.W} × ${res.H}칸 · 실 ${res.pal.length}색 · 사도삼촌 작업실`, french: `실 ${res.pal.length}색 · 사도삼촌 작업실`, line: "굵은 선은 바깥 윤곽 · 사도삼촌 작업실" };
-  ctx.fillText(TITLE[mode], pad, 26);
+  const sub = { cross: t("subCross", { w: res.W, h: res.H, n: res.pal.length }), french: t("subFrench", { n: res.pal.length }), line: t("subLine") };
+  ctx.fillText(title(), pad, 26);
   ctx.font = "13px sans-serif"; ctx.fillStyle = "#6b6f78";
-  ctx.fillText(sub[mode], pad, 48);
+  ctx.fillText(`${sub[mode]} · ${t("brand")}`, pad, 48);
   ctx.drawImage(chart, pad, head);
   let y = head + chart.height + 28;
   ctx.fillStyle = "#24262b"; ctx.font = "bold 15px sans-serif";
-  ctx.fillText("필요한 실", pad, y);
+  ctx.fillText(t("threadsTitle"), pad, y);
   y += 24;
   res.pal.forEach((p, i) => {
     const x = pad + (i % cols) * colW, yy = y + Math.floor(i / cols) * rowH;
@@ -853,7 +841,8 @@ function buildExport() {
     ctx.fillStyle = textColor(p.d); ctx.textAlign = "center"; ctx.font = "bold 12px sans-serif";
     ctx.fillText(mode === "cross" ? p.sym : p.num, x + 10, yy + 11);
     ctx.textAlign = "left"; ctx.fillStyle = "#24262b"; ctx.font = "13px sans-serif";
-    ctx.fillText(`DMC ${p.d.code}  ${p.d.name}  ·  ${countText(res, p)}`, x + 28, yy + 11);
+    const nm = mode === "line" ? lineColorName(p.d) : dmcName(p.d);
+    ctx.fillText(`DMC ${p.d.code}  ${nm ? nm + "  ·  " : "·  "}${countText(res, p)}`, x + 28, yy + 11);
   });
   return out;
 }
@@ -864,7 +853,7 @@ function exportPNG() {
   const bin = atob(out.toDataURL("image/png").split(",")[1]);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  const name = { cross: "십자수도안.png", french: "프랑스자수밑그림.png", line: "선도안.png" }[mode];
+  const name = t({ cross: "fileCross", french: "fileFrench", line: "fileLine" }[mode]);
   const file = new File([bytes], name, { type: "image/png" });
   const phone = matchMedia("(pointer: coarse)").matches;
 
@@ -887,7 +876,7 @@ function printPattern() {
   const area = $("printArea"), res = lastRes;
   area.innerHTML = "";
   const h1 = document.createElement("h1");
-  h1.textContent = TITLE[mode];
+  h1.textContent = title();
   const meta = document.createElement("p");
   meta.className = "meta";
   const img = new Image();
@@ -896,7 +885,7 @@ function printPattern() {
   if (mode === "cross") {
     // 십자수는 칸을 세며 보는 도안이라 종이 폭에 맞춰요
     const cm = v => (v / 14 * 2.54).toFixed(1);
-    meta.textContent = `${res.W} × ${res.H}칸 · 14칸 아이다 천에 놓으면 약 ${cm(res.W)} × ${cm(res.H)}cm · 사도삼촌 작업실`;
+    meta.textContent = `${t("printCrossMeta", { w: res.W, h: res.H, cw: cm(res.W), ch: cm(res.H) })} · ${t("brand")}`;
     img.className = "full";
     img.src = buildExport().toDataURL("image/png");
     area.append(img);
@@ -905,7 +894,7 @@ function printPattern() {
     const hoop = +$("hoop").value, size = HOOP_DESIGN[hoop];
     const chart = $("chartCanvas"), aspect = chart.width / chart.height;
     const w = aspect >= 1 ? size : size * aspect, h = w / aspect;
-    meta.textContent = `${hoop}cm 수틀용 · 도안 ${w.toFixed(1)} × ${h.toFixed(1)}cm · 점선 원은 수틀 안쪽 크기 · 사도삼촌 작업실`;
+    meta.textContent = `${t("printMeta", { hoop, w: w.toFixed(1), h: h.toFixed(1) })} · ${t("brand")}`;
     const stage = document.createElement("div");
     stage.className = "stage";
     const side = Math.min(hoop, PRINT_WIDTH);
@@ -922,11 +911,13 @@ function printPattern() {
     // 인쇄 배율 확인용 5cm 자
     const scale = document.createElement("div");
     scale.className = "scale";
-    scale.innerHTML = `<i style="width:5cm"></i><span>이 자가 정확히 5cm인지 재 보세요. 다르면 인쇄 배율을 '실제 크기(100%)'로 바꿔 주세요.</span>`;
+    scale.innerHTML = `<i style="width:5cm"></i><span></span>`;
+    scale.querySelector("span").textContent = t("ruler");
     const list = document.createElement("ul");
     res.pal.forEach(p => {
       const li = document.createElement("li");
-      li.textContent = `${mode === "french" ? p.num + "번 · " : ""}DMC ${p.d.code} ${p.d.name} · ${countText(res, p)}`;
+      const nm = mode === "line" ? lineColorName(p.d) : dmcName(p.d);
+      li.textContent = `${mode === "french" ? t("numPrefix", { n: p.num }) : ""}DMC ${p.d.code} ${nm ? nm + " " : ""}· ${countText(res, p)}`;
       list.append(li);
     });
     area.append(stage, scale, list);
@@ -949,11 +940,10 @@ function showSaveSheet(file) {
   const box = document.createElement("div");
   box.className = "save-sheet";
   box.innerHTML = `<div class="box">
-      <p><b>이미지를 손가락으로 길게 누르세요</b><br>
-      아이폰은 <b>'사진 앱에 저장'</b>, 안드로이드는 <b>'이미지 다운로드'</b>를 고르면 사진첩에 저장돼요.</p>
-      <img alt="저장할 도안">
-      <div class="row"><button type="button" class="btn" data-act="file">파일로 내려받기</button>
-      <button type="button" class="btn main" data-act="close">닫기</button></div>
+      <p>${t("sheetMsg")}</p>
+      <img alt="">
+      <div class="row"><button type="button" class="btn" data-act="file">${t("sheetFile")}</button>
+      <button type="button" class="btn main" data-act="close">${t("sheetClose")}</button></div>
     </div>`;
   box.querySelector("img").src = url;
   box.onclick = e => {
@@ -979,7 +969,7 @@ async function renderLine(id) {
     maskKey = "";
     setStatus("");
     if (want) {
-      setStatus(segmenter ? "✂️ 배경을 지우는 중이에요…" : "✂️ AI를 준비하는 중이에요… (처음 한 번만 약 6MB를 받아요)");
+      setStatus(t(segmenter ? "aiCutting" : "aiPrep"));
       await new Promise(r => setTimeout(r, 30));   // 안내 문구가 먼저 보이도록
       try {
         const m = await computeMask();
@@ -989,7 +979,7 @@ async function renderLine(id) {
       } catch (e) {
         if (id !== renderId) return false;
         console.warn(e);
-        setStatus("AI 배경 지우기를 불러오지 못했어요. 인터넷 연결을 확인해 주세요. 우선 배경을 그대로 두고 선 도안을 만들었어요.");
+        setStatus(t("aiFail"));
       }
     }
   }
@@ -1041,7 +1031,7 @@ function setMode(m) {
   document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
   document.querySelectorAll("[data-modes]").forEach(el => { el.hidden = !el.dataset.modes.split(" ").includes(m); });
   $("dots").hidden = m !== "line";
-  $("printBtn").textContent = m === "cross" ? "종이에 인쇄하기" : "실제 크기로 인쇄하기";
+  $("printBtn").textContent = t(m === "cross" ? "printCross" : "printReal");
   render();
 }
 
@@ -1080,10 +1070,37 @@ $("fileInput").addEventListener("change", e => { loadFile(e.target.files[0]); e.
 $("sampleBtn").onclick = sampleImage;
 $("resetTaps").onclick = () => { resetTaps(); if (mode === "line") render(); };
 document.querySelectorAll("#modes button").forEach(b => { b.onclick = () => setMode(b.dataset.mode); });
-[["colors", "colorsVal"], ["width", "widthVal"], ["detail", "detailVal"], ["thick", "thickVal"]].forEach(([id, out]) => {
-  $(id).addEventListener("input", () => { $(out).textContent = $(id).value; rerender(); });
+["colors", "width", "detail", "thick"].forEach(id => {
+  $(id).addEventListener("input", () => { sliderLabel(id); rerender(); });
 });
 ["skipWhite", "cleanup", "tint", "bgRemove", "lineColor", "hoop"].forEach(id => $(id).addEventListener("change", rerender));
 $("downloadBtn").onclick = exportPNG;
 $("printBtn").onclick = printPattern;
 $("year").textContent = new Date().getFullYear();
+
+// ===== 언어 바꾸기 =====
+function sliderLabel(id) {
+  const el = document.querySelector(`[data-for="${id}"]`);
+  el.innerHTML = t(el.dataset.i18nN, { n: `<b>${$(id).value}</b>` });
+}
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t("docTitle");
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  ["colors", "width", "detail", "thick"].forEach(sliderLabel);
+  document.querySelectorAll("option[data-col]").forEach(o => { o.textContent = `${t("col" + o.dataset.col)} (DMC ${o.dataset.col})`; });
+  document.querySelectorAll("option[data-hoop]").forEach(o => { o.textContent = t("hoopOpt", { h: o.dataset.hoop, d: HOOP_DESIGN[o.dataset.hoop] }); });
+  $("printBtn").textContent = t(mode === "cross" ? "printCross" : "printReal");
+  $("langSelect").value = lang;
+}
+
+Object.entries(LANGS).forEach(([code, label]) => $("langSelect").add(new Option(label, code)));
+$("langSelect").addEventListener("change", e => {
+  lang = e.target.value;
+  try { localStorage.setItem("lang", lang); } catch (err) {}
+  applyLang();
+  if (src) render();
+});
+applyLang();
