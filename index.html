@@ -189,6 +189,18 @@
   a.maker:hover { border-style: solid; }
 
   footer { font-size: 0.8125rem; color: var(--muted); }
+
+  /* 언어 */
+  nav .lang select {
+    font: inherit; font-size: 0.8125rem; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.1rem 0.35rem;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  html:not([lang="ko"]) {
+    --serif: Georgia, "Noto Serif", "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Hiragino Sans", "Yu Gothic", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  html:not([lang="ko"]) body { word-break: normal; overflow-wrap: anywhere; }
 </style>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}</style>
 </head>
@@ -196,12 +208,13 @@
 
 <div class="wrap">
   <nav aria-label="바로가기">
-    <a href="#about">소개</a>
-    <a href="#farm">농사</a>
-    <a href="#embroider">자수</a>
-    <a href="/embroidery/pattern.html">도안 만들기</a>
-    <a href="#write">글</a>
-    <a href="#contact">연락</a>
+    <a href="#about" data-t="nav_about">소개</a>
+    <a href="#farm" data-t="nav_farm">농사</a>
+    <a href="#embroider" data-t="nav_emb">자수</a>
+    <a href="/embroidery/pattern.html" data-t="nav_maker">도안 만들기</a>
+    <a href="#write" data-t="nav_write">글</a>
+    <a href="#contact" data-t="nav_contact">연락</a>
+    <label class="lang"><span class="sr" data-t="langLbl">언어</span><select id="langSelect"></select></label>
     <span class="nav-social">
       <a href="https://www.instagram.com/stitch_trip/" target="_blank" rel="noopener" aria-label="인스타그램 @stitch_trip" title="인스타그램 @stitch_trip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
       <a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" aria-label="네이버 블로그 simplehi-" title="네이버 블로그 simplehi-"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-2 2.5-2-2.5H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M9 14V8l6 6V8"/></svg></a>
@@ -210,15 +223,15 @@
   </nav>
 
   <header>
-    <h1><span class="num">4</span>일은 도시에서,<br><span class="num">3</span>일은 시골에서.</h1>
-    <p class="lede">농사를 짓고, 수를 놓고, 글을 씁니다. 손으로 천천히 기르고 만드는 것들을 이곳에 모아 둡니다.</p>
+    <h1 data-t-html="h1"><span class="num">4</span>일은 도시에서,<br><span class="num">3</span>일은 시골에서.</h1>
+    <p class="lede" data-t="lede">농사를 짓고, 수를 놓고, 글을 씁니다. 손으로 천천히 기르고 만드는 것들을 이곳에 모아 둡니다.</p>
   </header>
 
   <hr class="stitch">
 
   <section id="about">
     <h2>사도삼촌 <small>About</small></h2>
-    <p>평일 나흘은 도시에서 일하고, 주말 사흘은 시골집에서 밭을 돌봅니다. 도시에서는 생각을 모으고, 시골에서는 그 생각을 손으로 옮깁니다.</p>
+    <p data-t="aboutP">평일 나흘은 도시에서 일하고, 주말 사흘은 시골집에서 밭을 돌봅니다. 도시에서는 생각을 모으고, 시골에서는 그 생각을 손으로 옮깁니다.</p>
     <div class="week" aria-label="한 주의 생활: 월요일부터 목요일은 도시, 금요일부터 일요일은 시골">
       <div class="day"><i></i>월</div>
       <div class="day"><i></i>화</div>
@@ -228,56 +241,56 @@
       <div class="day chon"><i></i>토</div>
       <div class="day chon"><i></i>일</div>
     </div>
-    <p class="legend">회색은 도시, 쪽빛은 시골에서 보내는 날입니다.</p>
+    <p class="legend" data-t="legend">회색은 도시, 쪽빛은 시골에서 보내는 날입니다.</p>
   </section>
 
   <hr class="stitch">
 
   <section id="farm">
-    <h2>농사 <small>Farming</small></h2>
-    <p>주말마다 내려가는 시골집 텃밭에서 제철 작물을 기릅니다. 사흘만 머무는 농부라서 손이 덜 가는 작물을 골라 심습니다.</p>
+    <h2><span data-t="h_farm">농사</span> <small>Farming</small></h2>
+    <p data-t="farmP">주말마다 내려가는 시골집 텃밭에서 제철 작물을 기릅니다. 사흘만 머무는 농부라서 손이 덜 가는 작물을 골라 심습니다.</p>
     <ul class="list">
-      <li><a href="#farm">감자</a><span class="meta">3월 심기 · 6월 캐기</span></li>
-      <li><a href="#farm">고추</a><span class="meta">5월 심기 · 8월 따기</span></li>
-      <li><a href="#farm">김장 배추</a><span class="meta">8월 심기 · 11월 거두기</span></li>
+      <li><a href="#farm" data-t="crop1">감자</a><span class="meta" data-t="crop1m">3월 심기 · 6월 캐기</span></li>
+      <li><a href="#farm" data-t="crop2">고추</a><span class="meta" data-t="crop2m">5월 심기 · 8월 따기</span></li>
+      <li><a href="#farm" data-t="crop3">김장 배추</a><span class="meta" data-t="crop3m">8월 심기 · 11월 거두기</span></li>
     </ul>
   </section>
 
   <hr class="stitch">
 
   <section id="embroider">
-    <h2>자수 <small>Embroidery</small></h2>
-    <p>시골집 마당에 피는 풀꽃을 실로 옮깁니다. 홈질과 사슬수, 프렌치노트처럼 기본 땀을 즐겨 씁니다.</p>
+    <h2><span data-t="h_emb">자수</span> <small>Embroidery</small></h2>
+    <p data-t="embP">시골집 마당에 피는 풀꽃을 실로 옮깁니다. 홈질과 사슬수, 프렌치노트처럼 기본 땀을 즐겨 씁니다.</p>
     <ul class="list">
-      <li><a href="#embroider">마당의 쑥부쟁이</a><span class="meta">사슬수 · 새틴수</span></li>
-      <li><a href="#embroider">손수건 모서리 이니셜</a><span class="meta">백스티치</span></li>
-      <li><a href="#embroider">사시사철 풀꽃 샘플러</a><span class="meta">프렌치노트</span></li>
+      <li><a href="#embroider" data-t="work1">마당의 쑥부쟁이</a><span class="meta" data-t="work1m">사슬수 · 새틴수</span></li>
+      <li><a href="#embroider" data-t="work2">손수건 모서리 이니셜</a><span class="meta" data-t="work2m">백스티치</span></li>
+      <li><a href="#embroider" data-t="work3">사시사철 풀꽃 샘플러</a><span class="meta" data-t="work3m">프렌치노트</span></li>
     </ul>
     <a class="maker" href="/embroidery/pattern.html">
-      <b>📷 내 사진으로 도안 만들기</b>
-      <span>사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
+      <b data-t="makerT">📷 내 사진으로 도안 만들기</b>
+      <span data-t="makerD">사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
     </a>
   </section>
 
   <hr class="stitch">
 
   <section id="write">
-    <h2>글쓰기 <small>Writing</small></h2>
-    <p>도시와 시골을 오가며 보고 만든 것들에 대해 씁니다. 모든 글은 <a class="inline" href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">네이버 블로그</a>에서 읽을 수 있습니다.</p>
+    <h2><span data-t="h_write">글쓰기</span> <small>Writing</small></h2>
+    <p id="writeP">도시와 시골을 오가며 보고 만든 것들에 대해 씁니다. 모든 글은 <a class="inline" href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">네이버 블로그</a>에서 읽을 수 있습니다.</p>
     <ul class="list">
-      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">금요일 저녁, 시골로 가는 길</a><time datetime="2026-10-10">2026.10.10</time></li>
-      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">한 땀씩 느려지는 연습</a><time datetime="2026-09-26">2026.09.26</time></li>
-      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">처음 캔 감자 한 바구니</a><time datetime="2026-09-12">2026.09.12</time></li>
-      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener">사흘의 시골, 나흘의 도시</a><time datetime="2026-08-29">2026.08.29</time></li>
+      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post1">금요일 저녁, 시골로 가는 길</a><time datetime="2026-10-10">2026.10.10</time></li>
+      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post2">한 땀씩 느려지는 연습</a><time datetime="2026-09-26">2026.09.26</time></li>
+      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post3">처음 캔 감자 한 바구니</a><time datetime="2026-09-12">2026.09.12</time></li>
+      <li><a href="https://blog.naver.com/simplehi-" target="_blank" rel="noopener" data-t="post4">사흘의 시골, 나흘의 도시</a><time datetime="2026-08-29">2026.08.29</time></li>
     </ul>
   </section>
 
   <hr class="stitch">
 
   <section id="contact">
-    <h2>연락 <small>Contact</small></h2>
+    <h2><span data-t="h_contact">연락</span> <small>Contact</small></h2>
     <div class="contact">
-      <p>작업이나 글에 대해 이야기하고 싶다면 편하게 메일 주세요.</p>
+      <p data-t="contactP">작업이나 글에 대해 이야기하고 싶다면 편하게 메일 주세요.</p>
       <code>omilk339@gmail.com</code>
     </div>
     <div class="social">
@@ -289,5 +302,6 @@
 
   <footer>© 2026 사도삼촌 작업실</footer>
 </div>
+<script src="/home-i18n.js"></script>
 </body>
 </html>

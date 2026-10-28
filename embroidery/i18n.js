@@ -690,7 +690,10 @@ const I18N = {
 // 처음 언어: 고른 적 있으면 그대로, 아니면 휴대폰 언어 → 없으면 영어
 function pickLang() {
   const q = new URLSearchParams(location.search).get("lang");
-  if (q && LANGS[q]) return q;
+  if (q && LANGS[q]) {
+    try { localStorage.setItem("lang", q); } catch (e) {}   // 링크로 고른 언어를 다음 페이지에서도
+    return q;
+  }
   try { const s = localStorage.getItem("lang"); if (s && LANGS[s]) return s; } catch (e) {}
   for (const l of navigator.languages || [navigator.language || ""]) {
     const code = String(l).toLowerCase().slice(0, 2);
