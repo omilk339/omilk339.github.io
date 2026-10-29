@@ -1145,11 +1145,11 @@ $("sourceImg").addEventListener("click", e => {
 
 // ===== 직접 따라 그리기 =====
 // 사진을 흐리게 깔고 손가락(마우스)으로 선을 그어요. 손을 떼면 선을 매끈하게 펴서 도안에 넣어요.
-// 한 손가락 = 그리기, 두 손가락 = 확대·이동. 휴대폰에서는 손가락에 가리지 않게 손가락보다 조금 위에 그려져요.
-const PEN_LIFT = 40;              // 손가락보다 이만큼(px) 위에 그려요
+// 한 손가락 = 그리기, 두 손가락 = 확대·이동. 선은 손가락이 닿은 바로 그 자리에 그려지고,
+// 손가락에 가린 곳은 위쪽 동그란 돋보기에 크게 보여 줘요.
 let view = null;                  // { s: 배율, tx, ty } 칸 좌표 → 화면 좌표
 let drawing = null;               // 지금 긋고 있는 선
-let pen = null;                   // 펜 자리 표시 (화면 좌표)
+let pen = null;                   // 펜 자리 (화면 좌표, touch = 손가락인지)
 const pointers = new Map();
 let pinch = null, blocked = false;
 
@@ -1241,16 +1241,36 @@ function drawTrace() {
   // 펜 자리 표시
   if (pen) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.strokeStyle = "#b04a3a"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(pen.x, pen.y, 7, 0, Math.PI * 2); ctx.stroke();
+    if (pen.touch) {
+      // 돋보기: 손가락 아래 자리를 2배로. 위쪽에 자리가 없으면 옆으로 비켜요
+      const R = 48, Z = 2, gap = 36;
+      let lx = pen.x, ly = pen.y - R - gap;
+      if (ly < R + 4) { ly = Math.max(R + 4, pen.y); lx = pen.x > cssW / 2 ? pen.x - R - gap : pen.x + R + gap; }
+      lx = Math.min(cssW - R - 4, Math.max(R + 4, lx));
+      // 확대해 올 자리는 캔버스 안으로 (가장자리에서는 십자 표시가 가운데에서 비켜나요)
+      const sw = R * 2 / Z;
+      const sx = Math.min(cssW - sw, Math.max(0, pen.x - sw / 2)), sy = Math.min(cssH - sw, Math.max(0, pen.y - sw / 2));
+      const cx = lx - R + (pen.x - sx) * Z, cy = ly - R + (pen.y - sy) * Z;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(lx, ly, R, 0, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = "#fff"; ctx.fillRect(lx - R, ly - R, R * 2, R * 2);
+      ctx.drawImage(c, sx * dpr, sy * dpr, sw * dpr, sw * dpr, lx - R, ly - R, R * 2, R * 2);
+      ctx.strokeStyle = "#b04a3a"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx - 6, cy); ctx.lineTo(cx + 6, cy); ctx.moveTo(cx, cy - 6); ctx.lineTo(cx, cy + 6); ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = "#6b6f78"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(lx, ly, R, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.strokeStyle = "#b04a3a"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(pen.x, pen.y, 7, 0, Math.PI * 2); ctx.stroke();
+    }
   }
 }
 
 // 화면 좌표 → 칸 좌표
 function toGrid(e) {
   const r = $("traceCanvas").getBoundingClientRect();
-  const lift = e.pointerType === "touch" ? PEN_LIFT : 0;
-  const x = e.clientX - r.left, y = e.clientY - r.top - lift;
+  const x = e.clientX - r.left, y = e.clientY - r.top;
   return { sx: x, sy: y, gx: (x - view.tx) / view.s, gy: (y - view.ty) / view.s };
 }
 
@@ -1279,7 +1299,7 @@ tc.addEventListener("pointerdown", e => {
   if (pointers.size === 1 && !blocked) {
     const p = toGrid(e);
     drawing = [[p.gx, p.gy]];
-    pen = { x: p.sx, y: p.sy };
+    pen = { x: p.sx, y: p.sy, touch: e.pointerType !== "mouse" };
     drawTrace();
   } else if (pointers.size === 2) {
     // 두 번째 손가락이 닿으면 그리던 선은 버리고 확대·이동으로
@@ -1301,7 +1321,7 @@ tc.addEventListener("pointermove", e => {
     drawTrace();
   } else if (drawing) {
     const p = toGrid(e), last = drawing[drawing.length - 1];
-    pen = { x: p.sx, y: p.sy };
+    pen = { x: p.sx, y: p.sy, touch: e.pointerType !== "mouse" };
     if (Math.hypot(p.gx - last[0], p.gy - last[1]) * view.s >= 2) drawing.push([p.gx, p.gy]);
     drawTrace();
   }
