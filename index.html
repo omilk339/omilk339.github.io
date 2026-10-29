@@ -81,6 +81,7 @@
   nav .menu { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
   nav a { color: var(--muted); text-decoration: none; }
   nav a:hover { color: var(--indigo); }
+  nav a.hl { color: var(--thread); }
   a:focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; border-radius: 2px; }
 
   header { display: grid; gap: 1rem; }
@@ -199,8 +200,32 @@
     color: var(--fg);
     text-decoration: none;
   }
-  a.maker b { font-family: var(--serif); font-weight: 400; color: var(--indigo); }
+  a.maker b { font-family: var(--serif); font-weight: 400; color: var(--indigo); font-size: 1.0625rem; }
   a.maker span { font-size: 0.875rem; color: var(--muted); }
+  /* 사진 → 도안 예시 */
+  a.maker .ex {
+    display: grid; grid-template-columns: 1fr 2rem 1fr; align-items: center;
+    margin-bottom: 0.625rem;
+  }
+  a.maker .ex img { width: 100%; height: auto; aspect-ratio: 1; display: block; border-radius: 0.25rem; background: var(--line); }
+  a.maker .ex i {   /* 홈질 점선 화살표 */
+    height: 2px; margin-inline: 0.35rem; position: relative;
+    background: repeating-linear-gradient(90deg, var(--thread) 0 5px, transparent 5px 9px);
+  }
+  a.maker .ex i::after {
+    content: ""; position: absolute; right: -2px; top: -4px;
+    border-left: 7px solid var(--thread); border-block: 5px solid transparent;
+  }
+  /* 영상 아래 도안 만들기 단추 */
+  .cta {
+    justify-self: start; margin-top: -2rem;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1.25rem; border-radius: 999px;
+    background: var(--thread); color: var(--bg); text-decoration: none;
+    font-size: 0.9375rem; letter-spacing: 0.02em;
+  }
+  .cta::after { content: "→"; }
+  .cta:hover { filter: brightness(0.92); }
   a.maker:hover { border-color: var(--indigo); }
 
   footer { font-size: 0.8125rem; color: var(--muted); }
@@ -283,9 +308,9 @@
     </div>
     <div class="menu">
       <a href="#about" data-t="nav_about">소개</a>
-      <a href="#farm" data-t="nav_farm">농사</a>
       <a href="#embroider" data-t="nav_emb">자수</a>
-      <a href="/embroidery/pattern.html" data-t="nav_maker">도안 만들기</a>
+      <a class="hl" href="/embroidery/pattern.html" data-t="nav_maker">도안 만들기</a>
+      <a href="#farm" data-t="nav_farm">농사</a>
       <a href="#write" data-t="nav_write">글</a>
       <a href="#contact" data-t="nav_contact">연락</a>
     </div>
@@ -307,6 +332,8 @@
     <figcaption><span data-t="heroVid">수놓는 시간</span> · <a href="https://www.instagram.com/stitch_trip/" target="_blank" rel="noopener">@stitch_trip</a></figcaption>
   </figure>
 
+  <a class="cta" href="/embroidery/pattern.html" data-t="cta">내 사진으로 자수 도안 만들기</a>
+
   <hr class="stitch">
 
   <section id="about">
@@ -316,21 +343,18 @@
 
   <hr class="stitch">
 
-  <section id="farm">
-    <h2><span data-t="h_farm">농사</span> <small>Farming</small></h2>
-    <p data-t="farmP">주말마다 내려가는 시골집 텃밭에서 제철 작물을 기릅니다. 사흘만 머무는 농부라서 손이 덜 가는 작물을 골라 심습니다.</p>
-    <div class="garden" id="garden"></div>
-    <div class="posts" id="farmPosts" hidden>
-      <h3 data-t="farmPosts">텃밭 일기</h3>
-      <ul class="list"></ul>
-    </div>
-  </section>
-
-  <hr class="stitch">
-
   <section id="embroider">
     <h2><span data-t="h_emb">자수</span> <small>Embroidery</small></h2>
     <p data-t="embP">시골집 마당에 피는 풀꽃을 실로 옮깁니다. 홈질과 사슬수, 프렌치노트처럼 기본 땀을 즐겨 씁니다.</p>
+    <a class="maker" href="/embroidery/pattern.html">
+      <div class="ex" aria-hidden="true">
+        <img src="/img/maker-photo.jpg" width="360" height="360" loading="lazy" alt="">
+        <i></i>
+        <img src="/img/maker-chart.jpg" width="360" height="360" loading="lazy" alt="">
+      </div>
+      <b data-t="makerT">내 사진으로 도안 만들기 →</b>
+      <span data-t="makerD">사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
+    </a>
     <div class="gallery">
       <h3 data-t="instaTitle">인스타그램 고정 작품</h3>
       <div class="shots">
@@ -353,10 +377,18 @@
       <h3 data-t="embPosts">자수 일기</h3>
       <ul class="list"></ul>
     </div>
-    <a class="maker" href="/embroidery/pattern.html">
-      <b data-t="makerT">내 사진으로 도안 만들기 →</b>
-      <span data-t="makerD">사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
-    </a>
+  </section>
+
+  <hr class="stitch">
+
+  <section id="farm">
+    <h2><span data-t="h_farm">농사</span> <small>Farming</small></h2>
+    <p data-t="farmP">주말마다 내려가는 시골집 텃밭에서 제철 작물을 기릅니다. 사흘만 머무는 농부라서 손이 덜 가는 작물을 골라 심습니다.</p>
+    <div class="garden" id="garden"></div>
+    <div class="posts" id="farmPosts" hidden>
+      <h3 data-t="farmPosts">텃밭 일기</h3>
+      <ul class="list"></ul>
+    </div>
   </section>
 
   <hr class="stitch">
@@ -396,7 +428,7 @@
 
   <footer>© 2026 사도삼촌 작업실</footer>
 </div>
-<script src="/home-i18n.js?v=20261029a"></script>
+<script src="/home-i18n.js?v=20261029b"></script>
 <script src="/home-posts.js?v=20261028e"></script>
 <script src="/home-garden.js?v=20261028e"></script>
 <script src="/home-hero.js?v=20261029a"></script>
