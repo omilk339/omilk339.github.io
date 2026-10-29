@@ -86,13 +86,25 @@
   header { display: grid; gap: 1rem; }
   /* 첫 화면 큰 작품 사진 */
   .hero { margin: 0; display: grid; gap: 0.5rem; }
-  .hero img {
+  .hero .media { position: relative; }
+  .hero .media a { display: block; }
+  .hero img, .hero video {
     display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover;
     border-radius: 0.375rem; background: var(--line);
   }
   .hero figcaption { font-size: 0.8125rem; color: var(--muted); }
   .hero figcaption a { color: inherit; }
-  @media (min-width: 640px) { .hero img { aspect-ratio: 4 / 3; } }
+  @media (min-width: 640px) { .hero img, .hero video { aspect-ratio: 4 / 3; } }
+  /* 영상 멈춤·재생 단추 */
+  .vid-btn {
+    position: absolute; right: 0.625rem; bottom: 0.625rem; width: 2.25rem; height: 2.25rem;
+    display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer;
+    background: rgb(0 0 0 / 0.45); color: #fff; font-size: 0.75rem; line-height: 1;
+  }
+  .vid-btn:hover { background: rgb(0 0 0 / 0.65); }
+  .vid-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .vid-btn::before { content: "❚❚"; letter-spacing: -0.1em; }
+  .vid-btn[data-state="play"]::before { content: "▶"; letter-spacing: 0; margin-left: 0.1em; }
   h1 {
     font-family: var(--serif);
     font-weight: 700;
@@ -234,7 +246,7 @@
     margin: 0; font-family: var(--sans); font-weight: 400; font-size: 0.75rem;
     letter-spacing: 0.12em; color: var(--muted);
   }
-  .shots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.625rem; }
   .shots a { display: grid; gap: 0.35rem; color: var(--fg); text-decoration: none; min-width: 0; }
   .shots img {
     width: 100%; aspect-ratio: 4 / 5; height: auto; object-fit: cover; display: block;
@@ -285,10 +297,14 @@
   </header>
 
   <figure class="hero">
-    <a href="https://www.instagram.com/stitch_trip/p/DKn3B2qT03E/" target="_blank" rel="noopener">
-      <img src="/img/hero.jpg" width="1080" height="1080" alt="" data-t-alt="insta2" fetchpriority="high">
-    </a>
-    <figcaption><span data-t="insta2">연잎 입체 자수</span> · <a href="https://www.instagram.com/stitch_trip/" target="_blank" rel="noopener">@stitch_trip</a></figcaption>
+    <div class="media">
+      <a href="https://www.instagram.com/stitch_trip/p/B8sQuoHHDuz/" target="_blank" rel="noopener">
+        <video src="/img/hero.mp4" poster="/img/hero-video.jpg" width="720" height="720" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <span class="sr" data-t="heroVid">수놓는 시간</span>
+      </a>
+      <button class="vid-btn" type="button" hidden></button>
+    </div>
+    <figcaption><span data-t="heroVid">수놓는 시간</span> · <a href="https://www.instagram.com/stitch_trip/" target="_blank" rel="noopener">@stitch_trip</a></figcaption>
   </figure>
 
   <hr class="stitch">
@@ -321,6 +337,10 @@
         <a href="https://www.instagram.com/stitch_trip/reel/DAFIhn7ydkZ/" target="_blank" rel="noopener">
           <img src="/img/insta-1.jpg" width="360" height="640" loading="lazy" alt="" data-t-alt="insta1">
           <span data-t="insta1"></span>
+        </a>
+        <a href="https://www.instagram.com/stitch_trip/p/DKn3B2qT03E/" target="_blank" rel="noopener">
+          <img src="/img/hero.jpg" width="1080" height="1080" loading="lazy" alt="" data-t-alt="insta2">
+          <span data-t="insta2"></span>
         </a>
         <a href="https://www.instagram.com/stitch_trip/reel/DOws9hBk-QL/" target="_blank" rel="noopener">
           <img src="/img/insta-3.jpg" width="360" height="640" loading="lazy" alt="" data-t-alt="insta3">
@@ -376,8 +396,9 @@
 
   <footer>© 2026 사도삼촌 작업실</footer>
 </div>
-<script src="/home-i18n.js?v=20261028e"></script>
+<script src="/home-i18n.js?v=20261029a"></script>
 <script src="/home-posts.js?v=20261028e"></script>
 <script src="/home-garden.js?v=20261028e"></script>
+<script src="/home-hero.js?v=20261029a"></script>
 </body>
 </html>
