@@ -249,3 +249,19 @@ html:not([lang="ko"]) {
 }
 /* keep-all은 한국어 줄바꿈용: 중국어·일본어는 글자 단위로 줄이 바뀌어야 해요 */
 html:not([lang="ko"]) body { word-break: normal; overflow-wrap: anywhere; }
+
+/* 선 도안: 직접 따라 그리기 */
+.trace { display: grid; gap: 0.75rem; margin-top: 1.25rem; }
+.trace[hidden], #traceBox[hidden] { display: none; }
+.seg { display: inline-flex; justify-self: start; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--field); }
+.seg button {
+  font: inherit; font-size: 0.875rem; color: var(--muted); background: none; border: 0;
+  border-radius: 999px; padding: 0.4rem 1rem; cursor: pointer;
+}
+.seg button.on { background: var(--indigo); color: var(--bg); }
+#traceBox { display: grid; gap: 0.5rem; }
+.trace-stage { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 0.5rem; background: #fff; }
+#traceCanvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
+.trace-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; }
+.trace-tools .btn.small { margin-top: 0; }
+.trace-tools .check { margin-left: 0.25rem; }

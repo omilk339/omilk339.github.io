@@ -78,6 +78,9 @@ function nearestDmc(L, a, b) {
 let src = null;       // 원본을 줄여 둔 캔버스
 let mode = "cross";
 let lastRes = null;
+let lineSrc = "auto";   // 선 도안을 자동으로 딸지(auto), 직접 따라 그릴지(trace)
+let strokes = [];       // 직접 그린 선들 (선 도안 칸 좌표의 점 목록)
+let lastAuto = null;    // 자동으로 딴 선 도안 (따라 그릴 때 흐린 안내선으로 써요)
 
 function setSource(drawable, w, h) {
   const scale = Math.min(1, 900 / Math.max(w, h));
@@ -89,6 +92,7 @@ function setSource(drawable, w, h) {
   ctx.fillRect(0, 0, src.width, src.height);
   ctx.drawImage(drawable, 0, 0, src.width, src.height);
   srcId++;
+  strokes = [];
   resetTaps();
   $("sourceImg").src = src.toDataURL("image/jpeg", 0.85);
   $("sourceBox").hidden = false;
@@ -1053,14 +1057,19 @@ async function renderLine(id) {
       }
     }
   }
-  const res = makeLine();
+  lastAuto = makeLine();
+  drawCutout($("previewCanvas"), lastAuto);
+  showLine(lineSrc === "trace" ? traceRes(lastAuto) : lastAuto);
+  if (lineSrc === "trace") drawTrace();
+  return true;
+}
+
+function showLine(res) {
   lastRes = res;
-  drawCutout($("previewCanvas"), res);
   drawLine($("chartCanvas"), res, +$("thick").value);
   renderLegend(res);
   renderLineSummary(res);
   renderRecs(recommendLine(res));
-  return true;
 }
 
 async function render() {
@@ -1133,6 +1142,207 @@ $("sourceImg").addEventListener("click", e => {
   drawDots();
   if (mode === "line") render();
 });
+
+// ===== 직접 따라 그리기 =====
+// 사진을 흐리게 깔고 손가락(마우스)으로 선을 그어요. 손을 떼면 선을 매끈하게 펴서 도안에 넣어요.
+// 한 손가락 = 그리기, 두 손가락 = 확대·이동. 휴대폰에서는 손가락에 가리지 않게 손가락보다 조금 위에 그려져요.
+const PEN_LIFT = 40;              // 손가락보다 이만큼(px) 위에 그려요
+let view = null;                  // { s: 배율, tx, ty } 칸 좌표 → 화면 좌표
+let drawing = null;               // 지금 긋고 있는 선
+let pen = null;                   // 펜 자리 표시 (화면 좌표)
+const pointers = new Map();
+let pinch = null, blocked = false;
+
+// 그린 선을 매끈하게. 끝이 시작점 가까이 돌아오면 닫힌 모양(동그라미 등)으로 이어요
+function strokeShape(pts) {
+  if (pts.length <= 4) return { pts, closed: false };
+  const [fx, fy] = pts[0], [lx, ly] = pts[pts.length - 1];
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  const gap = Math.hypot(fx - lx, fy - ly);
+  const closed = pts.length > 10 && gap < Math.max(lastAuto.W, lastAuto.H) * 0.05 && gap < len * 0.15;
+  // 모서리를 잘게 깎아(차이킨 방식) 각진 곳 없이 둥글게
+  let out = smoothLine(pts, closed);
+  for (let k = 0; k < 2; k++) {
+    const n = out.length, next = [];
+    if (!closed) next.push(out[0]);
+    for (let i = 0; i < (closed ? n : n - 1); i++) {
+      const [ax, ay] = out[i], [bx, by] = out[(i + 1) % n];
+      next.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25], [ax * 0.25 + bx * 0.75, ay * 0.25 + by * 0.75]);
+    }
+    if (!closed) next.push(out[n - 1]);
+    out = next;
+  }
+  return { pts: out, closed };
+}
+
+function traceRes(auto) {
+  const innerLines = strokes.map(raw => {
+    const { pts: sm, closed } = strokeShape(raw);
+    let len = closed ? Math.hypot(sm[0][0] - sm[sm.length - 1][0], sm[0][1] - sm[sm.length - 1][1]) : 0;
+    for (let i = 1; i < sm.length; i++) len += Math.hypot(sm[i][0] - sm[i - 1][0], sm[i][1] - sm[i - 1][1]);
+    return { pts: sm, closed, len };
+  });
+  const nIn = Math.round(innerLines.reduce((sum, l) => sum + l.len, 0));
+  const line = DMC.find(d => d.code === $("lineColor").value);
+  return { ...auto, innerLines, outerLines: [], nIn, nOut: 0, pal: [{ d: line, count: nIn, sym: "〰", num: "〰" }] };
+}
+
+function traceSize() {
+  const c = $("traceCanvas"), box = c.parentElement.getBoundingClientRect();
+  const W = lastAuto.W, H = lastAuto.H;
+  const cssW = box.width, cssH = Math.min(cssW * H / W, innerHeight * 0.7);
+  const fit = Math.min(cssW / W, cssH / H);
+  return { c, cssW, cssH, fit, W, H };
+}
+
+function fitView() {
+  if (!lastAuto) return;
+  const { cssW, cssH, fit, W, H } = traceSize();
+  view = { s: fit, tx: (cssW - W * fit) / 2, ty: (cssH - H * fit) / 2 };
+}
+
+function clampView() {
+  const { cssW, cssH, fit, W, H } = traceSize();
+  view.s = Math.min(fit * 8, Math.max(fit, view.s));
+  const w = W * view.s, h = H * view.s;
+  view.tx = w <= cssW ? (cssW - w) / 2 : Math.min(0, Math.max(cssW - w, view.tx));
+  view.ty = h <= cssH ? (cssH - h) / 2 : Math.min(0, Math.max(cssH - h, view.ty));
+}
+
+function drawTrace() {
+  if (!lastAuto || $("traceBox").hidden) return;
+  const { c, cssW, cssH, W, H } = traceSize();
+  const dpr = devicePixelRatio || 1;
+  if (c.width !== Math.round(cssW * dpr) || c.height !== Math.round(cssH * dpr)) {
+    c.width = Math.round(cssW * dpr); c.height = Math.round(cssH * dpr);
+    c.style.height = cssH + "px";
+    fitView();
+  }
+  if (!view) fitView();
+  const ctx = c.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.tx, dpr * view.ty);
+  ctx.globalAlpha = 0.45;
+  ctx.drawImage(src, 0, 0, W, H);
+  ctx.globalAlpha = 1;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const path = (pts, closed) => { ctx.beginPath(); pts.forEach(([x, y], i) => ctx[i ? "lineTo" : "moveTo"](x, y)); if (closed) ctx.closePath(); ctx.stroke(); };
+  if ($("traceGuide").checked) {
+    ctx.strokeStyle = "rgba(47, 74, 122, 0.4)";
+    ctx.lineWidth = 1.5 / view.s;
+    [...lastAuto.innerLines, ...lastAuto.outerLines].forEach(l => path(l.pts));
+  }
+  ctx.strokeStyle = DMC.find(d => d.code === $("lineColor").value).hex;
+  ctx.lineWidth = Math.max((1.2 + +$("thick").value * 1.1) / 3, 2 / view.s);
+  strokes.forEach(raw => { const sh = strokeShape(raw); path(sh.pts, sh.closed); });
+  if (drawing) path(drawing);
+  // 펜 자리 표시
+  if (pen) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.strokeStyle = "#b04a3a"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(pen.x, pen.y, 7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+// 화면 좌표 → 칸 좌표
+function toGrid(e) {
+  const r = $("traceCanvas").getBoundingClientRect();
+  const lift = e.pointerType === "touch" ? PEN_LIFT : 0;
+  const x = e.clientX - r.left, y = e.clientY - r.top - lift;
+  return { sx: x, sy: y, gx: (x - view.tx) / view.s, gy: (y - view.ty) / view.s };
+}
+
+function finishStroke() {
+  if (drawing && drawing.length > 1) {
+    let len = 0;
+    for (let i = 1; i < drawing.length; i++) len += Math.hypot(drawing[i][0] - drawing[i - 1][0], drawing[i][1] - drawing[i - 1][1]);
+    if (len > 2) strokes.push(drawing);
+  }
+  drawing = null; pen = null;
+  drawTrace();
+  if (lastAuto) showLine(traceRes(lastAuto));
+}
+
+function pinchInfo() {
+  const [a, b] = [...pointers.values()];
+  const r = $("traceCanvas").getBoundingClientRect();
+  return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2 - r.left, my: (a.y + b.y) / 2 - r.top };
+}
+
+const tc = $("traceCanvas");
+tc.addEventListener("pointerdown", e => {
+  if (!view) return;
+  tc.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 1 && !blocked) {
+    const p = toGrid(e);
+    drawing = [[p.gx, p.gy]];
+    pen = { x: p.sx, y: p.sy };
+    drawTrace();
+  } else if (pointers.size === 2) {
+    // 두 번째 손가락이 닿으면 그리던 선은 버리고 확대·이동으로
+    drawing = null; pen = null; blocked = true;
+    const i = pinchInfo();
+    pinch = { ...i, s: view.s, gx: (i.mx - view.tx) / view.s, gy: (i.my - view.ty) / view.s };
+    drawTrace();
+  }
+});
+tc.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pointers.size === 2) {
+    const i = pinchInfo();
+    view.s = pinch.s * i.d / pinch.d;
+    clampView();
+    view.tx = i.mx - pinch.gx * view.s; view.ty = i.my - pinch.gy * view.s;
+    clampView();
+    drawTrace();
+  } else if (drawing) {
+    const p = toGrid(e), last = drawing[drawing.length - 1];
+    pen = { x: p.sx, y: p.sy };
+    if (Math.hypot(p.gx - last[0], p.gy - last[1]) * view.s >= 2) drawing.push([p.gx, p.gy]);
+    drawTrace();
+  }
+});
+const liftPointer = e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch = null;
+  if (drawing && pointers.size === 0) finishStroke();
+  if (pointers.size === 0) blocked = false;
+};
+tc.addEventListener("pointerup", liftPointer);
+tc.addEventListener("pointercancel", liftPointer);
+// 컴퓨터에서는 마우스 휠로 확대
+tc.addEventListener("wheel", e => {
+  if (!view) return;
+  e.preventDefault();
+  const r = tc.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const gx = (mx - view.tx) / view.s, gy = (my - view.ty) / view.s;
+  view.s *= e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  clampView();
+  view.tx = mx - gx * view.s; view.ty = my - gy * view.s;
+  clampView();
+  drawTrace();
+}, { passive: false });
+
+function setLineSrc(v) {
+  lineSrc = v;
+  document.querySelectorAll("#lineSrc button").forEach(b => b.classList.toggle("on", b.dataset.src === v));
+  $("traceBox").hidden = v !== "trace";
+  view = null;
+  if (!lastAuto) return;
+  drawTrace();
+  showLine(v === "trace" ? traceRes(lastAuto) : lastAuto);
+}
+document.querySelectorAll("#lineSrc button").forEach(b => { b.onclick = () => setLineSrc(b.dataset.src); });
+$("traceUndo").onclick = () => { strokes.pop(); finishStroke(); };
+$("traceClear").onclick = () => { if (strokes.length && confirm(t("traceClearAsk"))) { strokes = []; finishStroke(); } };
+$("traceFit").onclick = () => { fitView(); drawTrace(); };
+$("traceGuide").addEventListener("change", drawTrace);
+addEventListener("resize", () => { view = null; drawTrace(); });
 
 // ===== 시작 =====
 $("camInput").addEventListener("change", e => { loadFile(e.target.files[0]); e.target.value = ""; });

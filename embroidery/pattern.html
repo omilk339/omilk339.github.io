@@ -23,7 +23,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
-<link rel="stylesheet" href="pattern.css?v=20261028b">
+<link rel="stylesheet" href="pattern.css?v=20261029e">
 </head>
 <body>
 
@@ -121,6 +121,23 @@
       <label class="check" data-modes="french" hidden><input type="checkbox" id="tint" checked> <span data-i18n="tint">칸 안에 색 살짝 보여주기</span></label>
       <label class="check" data-modes="line" hidden><input type="checkbox" id="bgRemove" checked> <span data-i18n="bgRemove">AI로 배경 지우기</span></label>
     </div>
+    <!-- 선 도안: 자동으로 딸지, 사진 위에 직접 따라 그릴지 -->
+    <div class="trace" data-modes="line" hidden>
+      <div class="seg" id="lineSrc">
+        <button type="button" data-src="auto" class="on" data-i18n="srcAuto">자동으로 선 따기</button>
+        <button type="button" data-src="trace" data-i18n="srcTrace">직접 따라 그리기</button>
+      </div>
+      <div id="traceBox" hidden>
+        <p class="tip" data-i18n="traceTip">사진 위에 손가락으로 수놓을 선만 따라 그려요. 떨린 선은 자동으로 매끈하게 펴져요. 두 손가락으로 벌리면 크게 볼 수 있어요.</p>
+        <div class="trace-stage"><canvas id="traceCanvas"></canvas></div>
+        <div class="trace-tools">
+          <button class="btn small" id="traceUndo" type="button" data-i18n="traceUndo">↶ 되돌리기</button>
+          <button class="btn small" id="traceClear" type="button" data-i18n="traceClear">모두 지우기</button>
+          <button class="btn small" id="traceFit" type="button" data-i18n="traceFit">전체 보기</button>
+          <label class="check"><input type="checkbox" id="traceGuide" checked> <span data-i18n="traceGuide">자동 선 흐리게 깔기</span></label>
+        </div>
+      </div>
+    </div>
     <p class="status" id="status" hidden></p>
   </section>
 
@@ -177,7 +194,7 @@
 <!-- 인쇄할 때만 보이는 곳 -->
 <div id="printArea"></div>
 
-<script src="i18n.js?v=20261028b"></script>
-<script src="pattern.js?v=20261029d"></script>
+<script src="i18n.js?v=20261029e"></script>
+<script src="pattern.js?v=20261029h"></script>
 </body>
 </html>
