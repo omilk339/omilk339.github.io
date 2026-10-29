@@ -44,22 +44,31 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .wrap {
   max-width: 44rem;
   margin: 0 auto;
-  padding-block: 4.5rem 3rem;
+  padding-block: 1.5rem 3rem;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: grid;
   gap: 3rem;
 }
 
-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
-  font-size: 0.875rem;
-  letter-spacing: 0.04em;
+/* 맨 위: 사이트 이름 + 언어, 그 아래 메뉴 (첫 화면과 같아요) */
+nav { display: grid; gap: 0.75rem; font-size: 0.875rem; letter-spacing: 0.04em; }
+nav .bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1.5px dashed var(--line);   /* 홈질 땀 같은 점선 */
 }
+nav .brand {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--serif); font-size: 1.3125rem; font-weight: 700;
+  letter-spacing: 0.02em; color: var(--fg);
+}
+nav .brand svg { width: 1.375rem; height: 1.375rem; flex: none; }
+nav .brand:hover { color: var(--fg); }
+nav .menu { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
 nav a { color: var(--muted); text-decoration: none; }
-nav a:hover, nav a.here { color: var(--indigo); }
+nav a:hover { color: var(--indigo); }
+nav a.hl { color: var(--thread); }
 nav a.here { font-weight: 700; }
 
 header { display: grid; gap: 1rem; }
@@ -239,8 +248,13 @@ footer a { color: var(--muted); }
 }
 
 /* ===== 언어 ===== */
-nav .lang { margin-left: auto; }
-nav .lang select { font-size: 0.8125rem; padding: 0.15rem 0.4rem; color: var(--muted); }
+nav .lang select {
+  font: inherit; font-size: 0.8125rem; color: var(--muted); cursor: pointer;
+  background: none; border: 0; padding: 0; appearance: none; -webkit-appearance: none;
+  field-sizing: content;
+}
+nav .lang::after { content: " ▾"; font-size: 0.6875rem; color: var(--muted); }
+nav .lang:hover select, nav .lang:hover::after { color: var(--indigo); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* 고운 글꼴은 한글용이라, 다른 언어는 기기 글꼴로 (러시아어·베트남어 글자도 깨지지 않게) */
 html:not([lang="ko"]) {
