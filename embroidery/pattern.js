@@ -424,26 +424,97 @@ function makeLine() {
   mergeSmall(labels, W, H, minArea);
 
   // 색이 바뀌는 곳 = 안쪽 선, 배경과 닿는 곳 = 바깥 윤곽선
+  // 빛과 그림자 때문에 생긴 '비슷한 색' 사이 경계는 선으로 치지 않아요
+  const minDE = [30, 24, 18, 14, 10][d - 1];
   const inner = new Uint8Array(n), outer = new Uint8Array(n);
-  let area = 0, nIn = 0, nOut = 0;
+  let area = 0;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const p = y * W + x, l = labels[p];
     if (l !== bg) area++;
     [x < W - 1 ? p + 1 : -1, y < H - 1 ? p + W : -1].forEach(q => {
       if (q < 0 || labels[q] === l) return;
       if (l === bg || labels[q] === bg) outer[l === bg ? q : p] = 1;
-      else inner[p] = 1;
+      else if (dE(DMC[pal[l]].lab, DMC[pal[labels[q]]].lab) >= minDE) inner[p] = 1;
     });
     // 사진 가장자리에 걸친 주인공도 테두리 긋기
     if (l !== bg && mask && (x === 0 || y === 0 || x === W - 1 || y === H - 1)) outer[p] = 1;
   }
-  inner.forEach(v => { nIn += v; });
-  outer.forEach((v, p) => { if (v) { inner[p] = 0; nOut++; } });
+  outer.forEach((v, p) => { if (v) inner[p] = 0; });
+  // 점들을 이어 매끈한 선으로 만들고, 짧은 부스러기 선은 버리기
+  const side = Math.max(W, H);
+  const outerLines = traceLines(outer, W, H, side * 0.06);
+  const innerLines = traceLines(inner, W, H, side * [0.09, 0.065, 0.05, 0.035, 0.025][d - 1]);
+  const total = ls => Math.round(ls.reduce((sum, l) => sum + l.len, 0));
   const line = DMC.find(t => t.code === $("lineColor").value);
+  const nIn = total(innerLines), nOut = total(outerLines);
   return {
-    W, H, labels, bg, inner, outer, area, nIn, nOut,
+    W, H, labels, bg, innerLines, outerLines, area, nIn, nOut,
     pal: [{ d: line, count: nIn + nOut, sym: "〰", num: "〰" }]
   };
+}
+
+// 선 점(픽셀)들을 8방향으로 따라가며 이어 붙여 줄로 만들고, 계단처럼 꺾인 곳을 부드럽게 펴기
+function traceLines(edge, W, H, minLen) {
+  const seen = new Uint8Array(W * H), lines = [];
+  const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];   // 곧은 방향 먼저
+  const next = p => {
+    const x = p % W, y = (p - x) / W;
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const q = ny * W + nx;
+      if (edge[q] && !seen[q]) return q;
+    }
+    return -1;
+  };
+  const walk = p => { const out = []; for (let q = next(p); q >= 0; q = next(q)) { seen[q] = 1; out.push(q); } return out; };
+  const degree = p => {
+    const x = p % W, y = (p - x) / W;
+    let c = 0;
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && ny >= 0 && nx < W && ny < H && edge[ny * W + nx]) c++;
+    }
+    return c;
+  };
+  // 끝점(이웃이 하나뿐인 점)에서 먼저 시작해야 선이 중간에서 끊기지 않아요
+  const starts = [];
+  for (let p = 0; p < W * H; p++) if (edge[p] && degree(p) === 1) starts.push(p);
+  for (let p = 0; p < W * H; p++) if (edge[p]) starts.push(p);
+  for (const s of starts) {
+    if (seen[s]) continue;
+    seen[s] = 1;
+    const fwd = walk(s), back = walk(s);
+    const idx = [...back.reverse(), s, ...fwd];
+    if (idx.length < 3) continue;
+    const xy = idx.map(p => [p % W + 0.5, Math.floor(p / W) + 0.5]);
+    const [fx, fy] = xy[0], [lx, ly] = xy[xy.length - 1];
+    const closed = xy.length > 8 && Math.abs(fx - lx) <= 2 && Math.abs(fy - ly) <= 2;
+    const pts = smoothLine(xy, closed);
+    let len = 0;
+    for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    if (len >= minLen) lines.push({ pts, closed, len });
+  }
+  return lines;
+}
+
+// 이웃 점들의 평균으로 여러 번 다듬기 (열린 선은 양 끝을 그대로 둬요)
+function smoothLine(xy, closed) {
+  let pts = xy;
+  const n = pts.length, R = 3;
+  for (let pass = 0; pass < 3; pass++) {
+    pts = pts.map((pt, i) => {
+      if (!closed && (i === 0 || i === n - 1)) return pt;
+      let sx = 0, sy = 0, c = 0;
+      for (let k = -R; k <= R; k++) {
+        let j = i + k;
+        if (closed) j = (j + n) % n; else if (j < 0 || j >= n) continue;
+        sx += pts[j][0]; sy += pts[j][1]; c++;
+      }
+      return [sx / c, sy / c];
+    });
+  }
+  return pts;
 }
 
 // ===== 그리기 =====
@@ -468,35 +539,33 @@ function drawCutout(canvas, res) {
   ctx.drawImage(tmp, 0, 0);
 }
 
-// 선 픽셀마다 작은 원을 찍어 매끈한 선으로 (바깥 윤곽선은 조금 더 굵게)
+// 이어 붙인 선을 둥근 붓처럼 그리기 (바깥 윤곽선은 조금 더 굵게)
 function drawLine(canvas, res, thick) {
-  const S = 3, { W, H } = res;
+  const S = 3, { W, H } = res, all = [...res.innerLines, ...res.outerLines];
   // 선이 있는 곳만 잘라내기 (주인공이 종이에 꽉 차게)
   let x0 = W, y0 = H, x1 = -1, y1 = -1;
-  for (let p = 0; p < W * H; p++) {
-    if (!res.inner[p] && !res.outer[p]) continue;
-    const x = p % W, y = (p - x) / W;
+  all.forEach(l => l.pts.forEach(([x, y]) => {
     if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-  }
-  if (x1 < 0) { x0 = 0; y0 = 0; x1 = W - 1; y1 = H - 1; }
+  }));
+  if (x1 < 0) { x0 = 0; y0 = 0; x1 = W; y1 = H; }
   const pad = 6;
-  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
-  x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
-  res.cropW = x1 - x0 + 1;
-  canvas.width = res.cropW * S; canvas.height = (y1 - y0 + 1) * S;
+  x0 = Math.max(0, Math.floor(x0) - pad); y0 = Math.max(0, Math.floor(y0) - pad);
+  x1 = Math.min(W, Math.ceil(x1) + pad); y1 = Math.min(H, Math.ceil(y1) + pad);
+  res.cropW = x1 - x0;
+  canvas.width = res.cropW * S; canvas.height = (y1 - y0) * S;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = res.pal[0].d.hex;
-  const r = 0.6 + thick * 0.55;
-  [[res.inner, r], [res.outer, r + 1]].forEach(([edges, rad]) => {
+  ctx.strokeStyle = res.pal[0].d.hex;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const w = 1.2 + thick * 1.1;
+  [[res.innerLines, w], [res.outerLines, w + 2]].forEach(([lines, lw]) => {
+    ctx.lineWidth = lw;
     ctx.beginPath();
-    edges.forEach((v, p) => {
-      if (!v) return;
-      const x = (p % W - x0) * S + S / 2, y = (Math.floor(p / W) - y0) * S + S / 2;
-      ctx.moveTo(x + rad, y);
-      ctx.arc(x, y, rad, 0, Math.PI * 2);
+    lines.forEach(({ pts, closed }) => {
+      pts.forEach(([x, y], i) => ctx[i ? "lineTo" : "moveTo"]((x - x0) * S, (y - y0) * S));
+      if (closed) ctx.closePath();
     });
-    ctx.fill();
+    ctx.stroke();
   });
 }
 
