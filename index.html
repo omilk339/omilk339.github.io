@@ -231,6 +231,25 @@
   }
   a.maker:hover { border-color: var(--indigo); }
 
+  /* 사진 수틀 앱 설치 단추 */
+  .getapp {
+    display: grid; grid-template-columns: 48px 1fr; gap: 0.5rem 0.75rem; align-items: center;
+    margin-top: 0.75rem; padding: 0.875rem 1.125rem;
+    border: 1px dashed var(--line); border-radius: 0.5rem;
+  }
+  .getapp > img { border-radius: 0.6rem; }
+  .getapp-txt { display: grid; }
+  .getapp-txt b { font-family: var(--serif); font-weight: 400; color: var(--indigo); }
+  .getapp-txt span { font-size: 0.8125rem; color: var(--muted); }
+  .getapp-btns { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  a.app-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+    padding: 0.6rem 0.6rem; border-radius: 999px; text-decoration: none; font-size: 0.875rem; text-align: center; line-height: 1.3;
+    background: var(--indigo); color: var(--bg);
+  }
+  a.app-btn svg { width: 1.1rem; height: 1.1rem; flex: none; }
+  a.app-btn:hover { opacity: 0.9; }
+
   footer { font-size: 0.8125rem; color: var(--muted); }
 
   /* 텃밭 달력 */
@@ -356,6 +375,18 @@
       <b data-t="makerT">사진 수틀로 내 사진을 도안으로 →</b>
       <span data-t="makerD">사진을 찍으면 십자수·프랑스 자수 도안으로 바꾸고, 어울리는 기법을 추천해 드려요.</span>
     </a>
+    <!-- 사진 수틀 앱 설치 단추: 누르면 도안 페이지에서 휴대폰에 맞는 설치 순서를 보여줘요 -->
+    <div class="getapp">
+      <img src="/embroidery/app-icon-192.png" width="48" height="48" alt="">
+      <div class="getapp-txt">
+        <b data-t="appT">사진 수틀 앱</b>
+        <span data-t="appD">앱스토어 없이 바로 설치 · 무료 · 가입 없음</span>
+      </div>
+      <div class="getapp-btns">
+        <a class="app-btn" href="/embroidery/pattern.html?install=android"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span data-t="appAndroid">안드로이드 설치</span></a>
+        <a class="app-btn" href="/embroidery/pattern.html?install=ios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 5h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span data-t="appIos">아이폰 설치</span></a>
+      </div>
+    </div>
     <div class="gallery">
       <h3 data-t="instaTitle">인스타그램 고정 작품</h3>
       <div class="shots">
@@ -435,7 +466,7 @@
 
   <footer>© 2026 사도삼촌 작업실</footer>
 </div>
-<script src="/home-i18n.js?v=20261104a"></script>
+<script src="/home-i18n.js?v=20261104b"></script>
 <script src="/home-posts.js?v=20261028e"></script>
 <script src="/home-garden.js?v=20261028e"></script>
 <script src="/home-hero.js?v=20261029a"></script>

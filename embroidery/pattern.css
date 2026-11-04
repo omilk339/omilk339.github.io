@@ -89,6 +89,25 @@ h1 .num { color: var(--indigo); }
 /* 앱으로 설치 */
 .install { display: grid; gap: 0.4rem; justify-items: start; }
 .install .tip { margin: 0; }
+.guide {
+  justify-self: stretch; display: grid; gap: 0.6rem;
+  padding: 1rem 1.125rem; border: 1px solid var(--indigo); border-radius: 0.5rem;
+}
+.guide h3 { margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.0625rem; }
+.guide h3 img { border-radius: 0.4rem; }
+.guide p { margin: 0; }
+.guide ol { margin: 0; padding: 0; list-style: none; counter-reset: g; display: grid; gap: 0.5rem; }
+.guide li { counter-increment: g; display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.5rem; align-items: start; }
+.guide li::before {
+  content: counter(g); width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  display: grid; place-items: center; font-size: 0.875rem;
+  background: var(--indigo); color: var(--bg);
+}
+.guide .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.guide a.btn { text-decoration: none; }
+.guide .btn.small { margin-top: 0; }
+.guide .url { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.guide code { word-break: break-all; font-size: 0.8125rem; }
 
 /* 홈질 땀: 섹션 구분선 */
 .stitch {

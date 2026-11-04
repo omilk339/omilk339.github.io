@@ -1407,6 +1407,23 @@ $("langSelect").addEventListener("change", e => {
 // ===== 앱으로 설치 (사진 수틀) =====
 // 안드로이드·PC 크롬/엣지: 설치 버튼, 아이폰·아이패드 사파리: 홈 화면에 추가하는 방법 안내
 const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const device = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  ? "ios" : /android/i.test(navigator.userAgent) ? "android" : "pc";
+// 앱 안의 브라우저 이름 [한국어, 그 밖의 언어]
+const INAPP = { kakao: ["카카오톡", "KakaoTalk"], instagram: ["인스타그램", "Instagram"], naver: ["네이버 앱", "the NAVER app"],
+  facebook: ["페이스북", "Facebook"], line: ["라인", "LINE"], daum: ["다음 앱", "the Daum app"], band: ["밴드", "BAND"] };
+const inapp = (() => {
+  const ua = navigator.userAgent;
+  if (/KAKAOTALK/i.test(ua)) return "kakao";
+  if (/Instagram/.test(ua)) return "instagram";
+  if (/NAVER\(inapp/.test(ua)) return "naver";
+  if (/FBAN|FBAV/.test(ua)) return "facebook";
+  if (/\bLine\//.test(ua)) return "line";
+  if (/DaumApps/.test(ua)) return "daum";
+  if (/BAND\//.test(ua)) return "band";
+  if (device === "android" && /; wv\)/.test(ua)) return "generic";
+  return null;
+})();
 function showInstallTip(key) {
   $("installTip").dataset.i18n = key;
   $("installTip").textContent = t(key);
@@ -1432,8 +1449,57 @@ if (!installed) {
     $("installBtn").hidden = true;
     showInstallTip("installDone");
   });
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if (ios) showInstallTip("installIos");
+  if (!renderGuide() && device === "ios") showInstallTip("installIos");
+  $("langSelect").addEventListener("change", renderGuide);
+}
+
+// 설치 순서 안내: 홈페이지 단추(?install=android|ios)로 왔거나, 카톡·인스타처럼 앱 안 브라우저일 때
+function renderGuide() {
+  const want = new URLSearchParams(location.search).get("install");
+  const target = want === "android" || want === "ios" ? want : null;
+  if (!target && !inapp) return false;
+  const os = target || device;
+  const page = location.origin + location.pathname + "?install=" + os;
+  const ko = lang === "ko";
+  const steps = keys => `<ol>${keys.map(k => `<li>${t(k)}</li>`).join("")}</ol>`;
+  const copyBtn = `<button class="btn small" type="button" data-copy>${t("gCopy")}</button>`;
+  let body;
+
+  if (device !== os) {
+    // 다른 기기에서 눌렀을 때 (예: PC에서 '아이폰에 설치')
+    body = `<p>${t("gOther", { os: t(os === "ios" ? "osIos" : "osAndroid") })}</p>
+      <p class="url"><code>${page}</code> ${copyBtn}</p>`;
+  } else if (inapp) {
+    // 카카오톡·인스타그램 등 앱 안의 브라우저는 설치가 안 돼서 바깥 브라우저로
+    const app = inapp === "generic" ? t("gThisApp") : (ko ? INAPP[inapp][0] : INAPP[inapp][1]);
+    const browser = os === "ios" ? (ko ? "사파리로" : "Safari") : (ko ? "크롬으로" : "Chrome");   // 한국어는 조사까지
+    let open = "";
+    if (os === "android") {
+      open = `<a class="btn main" href="intent://${location.host}${location.pathname}?install=android#Intent;scheme=https;package=com.android.chrome;end">${t("gOpenChrome")}</a>`;
+    } else if (inapp === "kakao") {
+      open = `<a class="btn main" href="kakaotalk://web/openExternal?url=${encodeURIComponent(page)}">${t("gOpenSafari")}</a>`;
+    }
+    body = `<p>${t("gInapp", { app, browser })}</p>
+      <div class="row">${open} ${copyBtn}</div>
+      ${open ? "" : `<p>${t("gInappMenu")}</p>`}`;
+  } else if (os === "android") {
+    body = steps(["gAndroid1", "gAndroid2", "gAndroid3"]) +
+      (/SamsungBrowser/.test(navigator.userAgent) ? `<p class="tip">${t("gSamsung")}</p>` : "");
+  } else {
+    const safari = !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
+    body = steps(["gIos1", "gIos2", "gIos3"]) + (safari ? "" : `<p class="tip">${t("gIosSafari")}</p>`);
+  }
+
+  const box = $("installGuide");
+  box.innerHTML = `<h3><img src="app-icon-192.png" width="28" height="28" alt=""> ${t("gTitle")}</h3>${body}`;
+  const copy = box.querySelector("[data-copy]");
+  if (copy) copy.onclick = async () => {
+    try { await navigator.clipboard.writeText(page); copy.textContent = t("gCopied"); }
+    catch (err) { prompt("", page); }
+  };
+  box.hidden = false;
+  $("installBox").hidden = false;
+  return true;
 }
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
