@@ -1,0 +1,19 @@
+{
+  "id": "/embroidery/pattern.html",
+  "name": "사진 수틀",
+  "short_name": "사진 수틀",
+  "description": "사진 한 장을 자수 도안으로 바꾸고 어울리는 스티치 기법을 추천해 드려요.",
+  "lang": "ko",
+  "start_url": "/embroidery/pattern.html?app=1",
+  "scope": "/embroidery/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f4",
+  "theme_color": "#2f4a7a",
+  "categories": ["lifestyle", "graphics"],
+  "icons": [
+    { "src": "/embroidery/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/embroidery/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/embroidery/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

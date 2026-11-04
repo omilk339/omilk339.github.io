@@ -86,6 +86,10 @@ h1 .num { color: var(--indigo); }
   padding-left: 0.75rem; border-left: 2px solid var(--indigo);
 }
 
+/* 앱으로 설치 */
+.install { display: grid; gap: 0.4rem; justify-items: start; }
+.install .tip { margin: 0; }
+
 /* 홈질 땀: 섹션 구분선 */
 .stitch {
   height: 0; border: 0; margin: 0; width: 4.5rem;

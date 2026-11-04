@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>사진으로 도안 만들기 · 사도삼촌 작업실</title>
+<title>사진 수틀 · 사도삼촌 작업실</title>
 <meta name="description" content="사진을 찍으면 십자수 도안, 프랑스 자수 밑그림, 선 도안으로 바꾸고 어울리는 자수 기법을 추천해 드려요. 사진은 서버로 보내지 않아요.">
 <link rel="canonical" href="https://omilk339.github.io/embroidery/pattern.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="사도삼촌 작업실">
-<meta property="og:title" content="사진 한 장이 자수 도안이 됩니다 · 사도삼촌 작업실">
+<meta property="og:title" content="사진 수틀 — 사진 한 장이 자수 도안이 됩니다">
 <meta property="og:description" content="십자수 · 프랑스 자수 · 선 도안으로 바꾸고 어울리는 기법까지 추천해 드려요. 가입 없이, 사진은 내 휴대폰 안에서만.">
 <meta property="og:url" content="https://omilk339.github.io/embroidery/pattern.html">
 <meta property="og:image" content="https://omilk339.github.io/embroidery/og-pattern.png">
@@ -18,12 +18,18 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
 <link rel="icon" href="/favicon.png?v=2" type="image/png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+<link rel="apple-touch-icon" href="app-icon-180.png">
 <meta name="theme-color" content="#2f4a7a">
+<!-- 홈 화면에 설치하는 앱 「사진 수틀」 -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="사진 수틀">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
-<link rel="stylesheet" href="pattern.css?v=20261029f">
+<link rel="stylesheet" href="pattern.css?v=20261104a">
 </head>
 <body>
 
@@ -36,7 +42,7 @@
     <div class="menu">
       <a href="/#about" data-i18n="nav_about">소개</a>
       <a href="/#embroider" data-i18n="nav_emb">자수</a>
-      <a href="pattern.html" class="hl here" aria-current="page" data-i18n="nav_maker">도안 만들기</a>
+      <a href="pattern.html" class="hl here" aria-current="page" data-i18n="nav_maker">사진 수틀</a>
       <a href="/#farm" data-i18n="nav_farm">농사</a>
       <a href="/#write" data-i18n="nav_write">글</a>
       <a href="/#contact" data-i18n="nav_contact">연락</a>
@@ -47,6 +53,11 @@
     <h1 data-i18n-html="h1">사진 한 장이<br><span class="num">도안</span>이 됩니다.</h1>
     <p class="lede" data-i18n="lede">사진을 찍거나 고르면 자수 도안으로 바꾸고, 그림에 어울리는 기법을 추천해 드려요.</p>
     <p class="privacy" data-i18n="privacy">사진은 서버로 보내지지 않아요. 지금 쓰는 기기 안에서만 처리되고, 창을 닫으면 사라집니다. 선 도안의 AI 배경 지우기도 처음에 AI 모델만 내려받고, 사진은 기기 안에서 처리해요.</p>
+    <!-- 앱으로 설치: 설치할 수 있는 휴대폰·브라우저에서만 보여요 -->
+    <div class="install" id="installBox" hidden>
+      <button class="btn main" id="installBtn" type="button" data-i18n="installBtn" hidden>사진 수틀 앱으로 설치하기</button>
+      <p class="tip" id="installTip" hidden></p>
+    </div>
   </header>
 
   <hr class="stitch">
@@ -197,7 +208,7 @@
 <!-- 인쇄할 때만 보이는 곳 -->
 <div id="printArea"></div>
 
-<script src="i18n.js?v=20261029e"></script>
-<script src="pattern.js?v=20261029j"></script>
+<script src="i18n.js?v=20261104a"></script>
+<script src="pattern.js?v=20261104a"></script>
 </body>
 </html>

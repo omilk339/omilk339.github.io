@@ -1403,4 +1403,40 @@ $("langSelect").addEventListener("change", e => {
   applyLang();
   if (src) render();
 });
+
+// ===== 앱으로 설치 (사진 수틀) =====
+// 안드로이드·PC 크롬/엣지: 설치 버튼, 아이폰·아이패드 사파리: 홈 화면에 추가하는 방법 안내
+const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function showInstallTip(key) {
+  $("installTip").dataset.i18n = key;
+  $("installTip").textContent = t(key);
+  $("installTip").hidden = false;
+  $("installBox").hidden = false;
+}
+if (!installed) {
+  let installEvent = null;
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    installEvent = e;
+    $("installBtn").hidden = false;
+    showInstallTip("installTip");
+  });
+  $("installBtn").onclick = async () => {
+    if (!installEvent) return;
+    installEvent.prompt();
+    await installEvent.userChoice;
+    installEvent = null;
+    $("installBtn").hidden = true;
+  };
+  window.addEventListener("appinstalled", () => {
+    $("installBtn").hidden = true;
+    showInstallTip("installDone");
+  });
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (ios) showInstallTip("installIos");
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
 applyLang();
