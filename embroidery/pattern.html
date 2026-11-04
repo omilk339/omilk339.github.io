@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
-<link rel="stylesheet" href="pattern.css?v=20261104b">
+<link rel="stylesheet" href="pattern.css?v=20261104c">
 </head>
 <body>
 
@@ -59,6 +59,11 @@
       <p class="tip" id="installTip" hidden></p>
       <!-- 홈페이지의 '안드로이드/아이폰에 설치' 단추로 왔을 때: 휴대폰에 맞춘 설치 순서 -->
       <div class="guide" id="installGuide" hidden></div>
+    </div>
+    <!-- 친구에게 공유: 설치한 앱에는 주소창이 없어서 여기서 링크를 보내요 -->
+    <div class="share">
+      <button class="btn small" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.9l7.6-4.3M8.2 13.1l7.6 4.3"/></svg><span data-i18n="shareBtn">친구에게 공유하기</span></button>
+      <span class="tip" id="shareMsg" hidden></span>
     </div>
   </header>
 
@@ -210,7 +215,7 @@
 <!-- 인쇄할 때만 보이는 곳 -->
 <div id="printArea"></div>
 
-<script src="i18n.js?v=20261104b"></script>
-<script src="pattern.js?v=20261104b"></script>
+<script src="i18n.js?v=20261104c"></script>
+<script src="pattern.js?v=20261104c"></script>
 </body>
 </html>

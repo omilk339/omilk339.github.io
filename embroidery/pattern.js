@@ -1501,6 +1501,22 @@ function renderGuide() {
   $("installBox").hidden = false;
   return true;
 }
+
+// ===== 친구에게 공유 =====
+// 휴대폰: 카톡·문자 같은 공유 창, 공유 창이 없는 컴퓨터: 링크 복사
+$("shareBtn").onclick = async () => {
+  const data = { title: "사진 수틀", text: t("shareText"), url: "https://omilk339.github.io/embroidery/pattern.html" };
+  if (navigator.share) {
+    try { await navigator.share(data); return; }
+    catch (err) { if (err.name === "AbortError") return; }   // 공유 창을 그냥 닫은 경우
+  }
+  try { await navigator.clipboard.writeText(data.text + "\n" + data.url); }
+  catch (err) { prompt("", data.url); return; }
+  $("shareMsg").dataset.i18n = "shareCopied";
+  $("shareMsg").textContent = t("shareCopied");
+  $("shareMsg").hidden = false;
+};
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }

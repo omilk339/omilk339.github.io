@@ -86,6 +86,11 @@ h1 .num { color: var(--indigo); }
   padding-left: 0.75rem; border-left: 2px solid var(--indigo);
 }
 
+/* 친구에게 공유 */
+.share { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.share .btn.small { margin-top: 0; }
+.share svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
 /* 앱으로 설치 */
 .install { display: grid; gap: 0.4rem; justify-items: start; }
 .install .tip { margin: 0; }
