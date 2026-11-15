@@ -2,6 +2,12 @@
  "blog": "https://blog.naver.com/simplehi-",
  "posts": [
   {
+   "title": "가창 정미네",
+   "url": "https://blog.naver.com/simplehi-/224478033702",
+   "date": "2026-11-15",
+   "category": "도시에서 다녀온 짧은 여행"
+  },
+  {
    "title": "예술학교로 거듭나는 폐교 / 꿈꾸는 음악학교",
    "url": "https://blog.naver.com/simplehi-/224473221288",
    "date": "2026-11-11",
@@ -294,12 +300,6 @@
    "url": "https://blog.naver.com/simplehi-/224331074635",
    "date": "2026-06-29",
    "category": "시골집과 텃밭"
-  },
-  {
-   "title": "99881234, 오래 사는 것보다 건강하게 사는 것이 복이다",
-   "url": "https://blog.naver.com/simplehi-/224331052490",
-   "date": "2026-06-29",
-   "category": "도시의 일상"
   }
  ]
 }
