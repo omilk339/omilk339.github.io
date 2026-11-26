@@ -2,6 +2,12 @@
  "blog": "https://blog.naver.com/simplehi-",
  "posts": [
   {
+   "title": "작은 화분 자수로 노트 표지 만들기",
+   "url": "https://blog.naver.com/simplehi-/224493851286",
+   "date": "2026-11-27",
+   "category": "자수작업 일기"
+  },
+  {
    "title": "프렌치노트가 자꾸 풀린다면? 동글동글 예쁘게 놓는 법",
    "url": "https://blog.naver.com/simplehi-/224493258369",
    "date": "2026-11-26",
@@ -294,12 +300,6 @@
    "url": "https://blog.naver.com/simplehi-/224455029452",
    "date": "2026-10-27",
    "category": "도시의 일상"
-  },
-  {
-   "title": "십자수, 꼭 전용 천에만 놓아야 할까? 흰 네트 위에 수놓은 내 이름",
-   "url": "https://blog.naver.com/simplehi-/224455028701",
-   "date": "2026-10-27",
-   "category": "자수작업 일기"
   }
  ]
 }
